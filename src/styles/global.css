@@ -1,0 +1,84 @@
+@import '@fontsource-variable/space-grotesk/wght.css';
+@import '@fontsource-variable/heebo/wght.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+:root {
+  color-scheme: dark;
+
+  --font-display: 'Space Grotesk Variable', 'Heebo Variable', system-ui, sans-serif;
+  --font-hebrew: 'Heebo Variable', 'Space Grotesk Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-shift: 420ms;
+  --dur-ui: 280ms;
+
+  /* Portal (neutral) */
+  --ctrl-ink: #030306;
+  --ctrl-text: #f4f4f7;
+  --ctrl-beam: #ffffff;
+
+  /* Avaria — graphite / amber */
+  --av-bg: #0b0b0d;
+  --av-bg-raised: #161517;
+  --av-amber: #ffac2f;
+  --av-amber-rgb: 255 172 47;
+  --av-hot-rgb: 255 118 26;
+  --av-text: #f8f2e9;
+  --av-muted: #bcb2a4;
+  --av-focus: #ffc65c;
+
+  /* המחלבה — deep space / SATCOM */
+  --mc-bg: #04051a;
+  --mc-bg-raised: #0c0d36;
+  --mc-violet: #a996ff;
+  --mc-violet-rgb: 150 125 255;
+  --mc-cyan-rgb: 124 196 255;
+  --mc-text: #f0f0ff;
+  --mc-muted: #b2b6e0;
+  --mc-focus: #cbbcff;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--ctrl-ink);
+  color: var(--ctrl-text);
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--font-hebrew);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+p,
+dl,
+dd {
+  margin: 0;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
