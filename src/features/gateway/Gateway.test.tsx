@@ -41,10 +41,28 @@ describe('Gateway', () => {
   it('renders the portal identity and both systems', () => {
     setup()
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('TAKSHAL CTRL')
-    expect(screen.getByRole('heading', { level: 2, name: 'AVARIA' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Avaria' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: 'המחלבה' })).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'AVARIA' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Avaria' })).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'המחלבה' })).toBeInTheDocument()
+  })
+
+  it('shows each system by its own supplied logo, with intrinsic size to avoid layout shift', () => {
+    setup()
+    for (const [name, system] of [
+      ['Avaria', configured[0]],
+      ['המחלבה', configured[1]],
+    ] as const) {
+      const logo = screen.getByRole('img', { name })
+      expect(logo).toHaveAttribute('src', system.logo.src)
+      expect(logo).toHaveAttribute('width', String(system.logo.width))
+      expect(logo).toHaveAttribute('height', String(system.logo.height))
+    }
+  })
+
+  it('carries no invented telemetry or status copy', () => {
+    const { container } = setup()
+    expect(container).not.toHaveTextContent(/NOMINAL|ONLINE|ACTIVE|DIAG|THRESHOLD|SYS·/i)
   })
 
   it('links each entry to its configured destination, in DOM (tab) order', () => {
@@ -60,7 +78,7 @@ describe('Gateway', () => {
     const { main } = setup()
     act(() => avariaLink().focus())
     expect(main).toHaveAttribute('data-active', 'avaria')
-    expect(screen.getByRole('region', { name: 'AVARIA' })).toHaveAttribute('data-state', 'active')
+    expect(screen.getByRole('region', { name: 'Avaria' })).toHaveAttribute('data-state', 'active')
     expect(screen.getByRole('region', { name: 'המחלבה' })).toHaveAttribute('data-state', 'receded')
 
     act(() => machlavaLink().focus())
@@ -68,6 +86,29 @@ describe('Gateway', () => {
 
     act(() => machlavaLink().blur())
     expect(main).toHaveAttribute('data-active', 'none')
+  })
+
+  it('lets the most recent input lead: keyboard focus overrides a resting mouse, and vice versa', () => {
+    const { main } = setup()
+    const machlava = screen.getByRole('region', { name: 'המחלבה' })
+    const matchMedia = window.matchMedia
+    window.matchMedia = ((query: string) => ({ ...matchMedia(query), matches: query === '(hover: hover)' })) as typeof window.matchMedia
+    try {
+      fireEvent.pointerEnter(machlava, { pointerType: 'mouse' })
+      expect(main).toHaveAttribute('data-active', 'machlava')
+
+      act(() => avariaLink().focus())
+      expect(main).toHaveAttribute('data-active', 'avaria')
+
+      fireEvent.pointerLeave(machlava, { pointerType: 'mouse' })
+      fireEvent.pointerEnter(machlava, { pointerType: 'mouse' })
+      expect(main).toHaveAttribute('data-active', 'machlava')
+
+      fireEvent.pointerLeave(machlava, { pointerType: 'mouse' })
+      expect(main).toHaveAttribute('data-active', 'avaria')
+    } finally {
+      window.matchMedia = matchMedia
+    }
   })
 
   it('plays the hand-off, then navigates in the same tab', () => {

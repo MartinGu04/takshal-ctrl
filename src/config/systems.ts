@@ -6,20 +6,27 @@
  * (see `.env.example`) so they can change without touching any component.
  */
 
+import avariaLogo from '../assets/brand/avaria-logo.webp'
+import machlavaLogo from '../assets/brand/machlava-logo.webp'
 import { resolveDestination, type Destination } from './destination'
 
 export type SystemId = 'avaria' | 'machlava'
 
+/** A supplied brand asset, derived from brand/source/ by scripts/prepare-brand-assets.py. */
+export interface BrandLogo {
+  readonly src: string
+  /** Intrinsic pixel size — rendered as width/height attributes so the layout never shifts. */
+  readonly width: number
+  readonly height: number
+}
+
 export interface SystemDefinition {
   readonly id: SystemId
-  /** Display name, rendered as the world's headline. */
+  /** Accessible name; the visible name is the system's own logo. */
   readonly name: string
-  /** Language of the display name, for correct pronunciation and shaping. */
-  readonly nameLang: 'en' | 'he'
-  /** Small technical label above the headline. */
-  readonly designation: string
-  /** One short supporting line. Keep it brief — the page should read instantly. */
-  readonly tagline: string
+  readonly logo: BrandLogo
+  /** Optional supporting line. Omitted when the logo already carries one. */
+  readonly tagline?: string
   readonly ctaLabel: string
   readonly destination: Destination
 }
@@ -33,19 +40,17 @@ export function createSystems(sources: SystemSources, base: string): readonly [S
   return [
     {
       id: 'avaria',
-      name: 'AVARIA',
-      nameLang: 'en',
-      designation: 'SYS·01 — DIAGNOSTICS',
-      tagline: 'תקלות, אבחון והתראות — במבט אחד.',
+      name: 'Avaria',
+      logo: { src: avariaLogo, width: 1373, height: 315 },
+      tagline: 'מערכת ניהול ומעקב תקלות',
       ctaLabel: 'כניסה ל־Avaria',
       destination: resolveDestination(sources.avariaUrl, base),
     },
     {
       id: 'machlava',
       name: 'המחלבה',
-      nameLang: 'he',
-      designation: 'SYS·02 — SATCOM LINK',
-      tagline: 'תקשורת, תיאום ושליטה — בערוץ אחד.',
+      // The lockup includes the system's own tagline ("החלב נגמר. המשמרת לא.").
+      logo: { src: machlavaLogo, width: 960, height: 1029 },
       ctaLabel: 'כניסה להמחלבה',
       destination: resolveDestination(sources.machlavaUrl, base),
     },

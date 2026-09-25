@@ -15,9 +15,11 @@ export function Gateway({ systems, navigate = navigateInSameTab }: GatewayProps)
   const reducedMotion = usePrefersReducedMotion()
   const [hovered, setHovered] = useState<SystemId | null>(null)
   const [focused, setFocused] = useState<SystemId | null>(null)
+  // Whichever input moved last leads: tabbing to a world wins over a resting mouse, and vice versa.
+  const [lastInput, setLastInput] = useState<'pointer' | 'focus'>('pointer')
   const { launching, launch } = useLaunch(navigate)
 
-  const active = launching ?? hovered ?? focused
+  const active = launching ?? (lastInput === 'focus' ? (focused ?? hovered) : (hovered ?? focused))
 
   const stateOf = (id: SystemId): WorldState => {
     if (launching) return launching === id ? 'launching' : 'dormant'
@@ -27,10 +29,12 @@ export function Gateway({ systems, navigate = navigateInSameTab }: GatewayProps)
 
   const onHover = useCallback((id: SystemId, on: boolean) => {
     setHovered((current) => (on ? id : current === id ? null : current))
+    if (on) setLastInput('pointer')
   }, [])
 
   const onFocus = useCallback((id: SystemId, on: boolean) => {
     setFocused((current) => (on ? id : current === id ? null : current))
+    if (on) setLastInput('focus')
   }, [])
 
   return (

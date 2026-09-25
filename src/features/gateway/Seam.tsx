@@ -1,3 +1,16 @@
+import patchSatcom from '../../assets/brand/502-satcom.webp'
+import patchStrategic from '../../assets/brand/502-strategic-communication.webp'
+
+/** 502 insignia — a quiet secondary identity for the portal shell, never competing with the systems. */
+function Insignia({ className }: { className: string }) {
+  return (
+    <div className={`insignia ${className}`}>
+      <img src={patchStrategic} width={158} height={160} alt="סמל 502 Strategic Communication" decoding="async" />
+      <img src={patchSatcom} width={158} height={160} alt="סמל 502" decoding="async" />
+    </div>
+  )
+}
+
 /**
  * The illuminated boundary between the two worlds, and the portal's own identity.
  * The wordmark is split by the beam itself: TAKSHAL ┃ CTRL.
@@ -26,8 +39,14 @@ export function Seam() {
           <span className="brand__gate" aria-hidden="true" />
           <span className="brand__word brand__word--ctrl">CTRL</span>
         </h1>
-        <p className="brand__tagline">Unified Systems Access</p>
+        <div className="brand__meta">
+          <p className="brand__tagline">Unified Systems Access</p>
+          {/* On narrow screens the insignia flank the tagline; on wide screens they sit at the foot of the seam. */}
+          <Insignia className="insignia--brand" />
+        </div>
       </div>
+
+      <Insignia className="insignia--foot" />
     </header>
   )
 }

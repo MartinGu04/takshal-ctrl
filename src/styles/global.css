@@ -20,25 +20,26 @@
   --ctrl-text: #f4f4f7;
   --ctrl-beam: #ffffff;
 
-  /* Avaria — graphite / amber */
-  --av-bg: #0b0b0d;
-  --av-bg-raised: #161517;
-  --av-amber: #ffac2f;
-  --av-amber-rgb: 255 172 47;
-  --av-hot-rgb: 255 118 26;
-  --av-text: #f8f2e9;
-  --av-muted: #bcb2a4;
-  --av-focus: #ffc65c;
+  /* Avaria — near-black navy / violet / magenta (from the Avaria mark) */
+  --av-bg: #06050f;
+  --av-violet: #8b40f0;
+  --av-violet-rgb: 139 64 240;
+  --av-magenta-rgb: 214 76 240;
+  --av-text: #f4f0ff;
+  --av-muted: #b8b0d6;
+  --av-focus: #c7a4ff;
 
-  /* המחלבה — deep space / SATCOM */
-  --mc-bg: #04051a;
-  --mc-bg-raised: #0c0d36;
-  --mc-violet: #a996ff;
-  --mc-violet-rgb: 150 125 255;
-  --mc-cyan-rgb: 124 196 255;
-  --mc-text: #f0f0ff;
-  --mc-muted: #b2b6e0;
-  --mc-focus: #cbbcff;
+  /* המחלבה — deep navy space / electric blue → violet (from the המחלבה logo) */
+  --mc-bg: #050c27;
+  --mc-bg-raised: #0b1a4a;
+  --mc-blue: #2f7bff;
+  --mc-blue-rgb: 30 110 255;
+  --mc-violet: #9a6bff;
+  --mc-violet-rgb: 124 64 240;
+  --mc-cyan-rgb: 110 190 255;
+  --mc-text: #eef3ff;
+  --mc-muted: #aab7e2;
+  --mc-focus: #8fbaff;
 }
 
 *,

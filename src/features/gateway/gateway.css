@@ -36,7 +36,7 @@
   order: 1;
   --world-text: var(--av-text);
   --world-muted: var(--av-muted);
-  --world-accent: var(--av-amber);
+  --world-accent: #b78cff;
   --world-focus: var(--av-focus);
   background: var(--av-bg);
 }
@@ -45,7 +45,7 @@
   order: 3;
   --world-text: var(--mc-text);
   --world-muted: var(--mc-muted);
-  --world-accent: var(--mc-violet);
+  --world-accent: #7fb0ff;
   --world-focus: var(--mc-focus);
   background: var(--mc-bg);
 }
@@ -81,8 +81,12 @@
 /* ───────────────────────── World content ───────────────────────── */
 
 .world__content {
-  /* Sized to the viewport, not the half, so copy never re-wraps while the split moves. */
+  /*
+   * Sized to the viewport, not the half, so nothing re-wraps while the split moves.
+   * Both worlds share the same content height, so the two CTAs line up across the seam.
+   */
   width: min(32rem, 32vw);
+  height: min(58vh, 33rem);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -91,45 +95,42 @@
 }
 
 .world[data-state='receded'] .world__content {
-  opacity: 0.66;
+  opacity: 0.62;
 }
 
 .world[data-state='dormant'] .world__content {
   opacity: 0;
 }
 
-.world__designation {
-  display: inline-flex;
+.world__identity {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  font: 500 0.6875rem/1 var(--font-mono);
-  letter-spacing: 0.26em;
-  color: var(--world-muted);
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.world__signal {
-  flex: none;
-  display: inline-block;
+  justify-content: center;
 }
 
 .world__title {
-  margin-top: clamp(14px, 2.4vh, 26px);
-  line-height: 0.92;
-  white-space: nowrap;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  -webkit-background-clip: text;
+  display: flex;
+  justify-content: center;
   transition: transform var(--dur-shift) var(--ease-out);
 }
 
 .world[data-state='active'] .world__title {
-  transform: scale(1.025);
+  transform: scale(1.03);
+}
+
+.world__logo {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .world__tagline {
-  margin-top: clamp(14px, 2.2vh, 24px);
+  margin-top: clamp(16px, 2.6vh, 28px);
   max-width: 30ch;
   text-wrap: balance;
   font-size: clamp(0.95rem, 0.3vw + 0.85rem, 1.125rem);
@@ -170,7 +171,7 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  margin-top: clamp(24px, 4.2vh, 40px);
+  margin-top: clamp(20px, 3.4vh, 36px);
   color: inherit;
   text-decoration: none;
   outline: none;
@@ -242,20 +243,20 @@
 /* ───────────────────────── CTA — Avaria ───────────────────────── */
 
 .cta--avaria .cta__frame {
-  color: #fff7ec;
-  background-color: rgb(var(--av-amber-rgb) / 0.1);
-  border: 1px solid rgb(var(--av-amber-rgb) / 0.5);
-  border-radius: 2px;
-  box-shadow: inset 0 1px 0 rgb(255 226 180 / 0.08);
+  color: #f6f1ff;
+  background-color: rgb(var(--av-violet-rgb) / 0.12);
+  border: 1px solid rgb(var(--av-violet-rgb) / 0.6);
+  border-radius: 3px;
+  box-shadow: inset 0 1px 0 rgb(220 200 255 / 0.08);
 }
 
 .cta--avaria .cta__arrow {
-  color: var(--av-amber);
+  color: #b78cff;
 }
 
 /* Diagnostic corner brackets around the button. */
 .cta--avaria .cta__corners {
-  --c: rgb(var(--av-amber-rgb) / 0.9);
+  --c: rgb(176 128 255 / 0.95);
   --l: 9px;
   --w: 1.5px;
   position: absolute;
@@ -280,12 +281,12 @@
 .world--avaria[data-state='active'] .cta__frame,
 .world--avaria[data-state='launching'] .cta__frame {
   transform: translateY(-2px);
-  background-color: rgb(var(--av-amber-rgb) / 0.18);
-  border-color: rgb(var(--av-amber-rgb) / 0.95);
+  background-color: rgb(var(--av-violet-rgb) / 0.24);
+  border-color: rgb(186 140 255 / 0.95);
   box-shadow:
-    inset 0 1px 0 rgb(255 226 180 / 0.14),
-    0 0 0 1px rgb(var(--av-amber-rgb) / 0.12),
-    0 14px 34px -12px rgb(var(--av-hot-rgb) / 0.7);
+    inset 0 1px 0 rgb(220 200 255 / 0.14),
+    0 0 0 1px rgb(var(--av-violet-rgb) / 0.15),
+    0 14px 36px -12px rgb(var(--av-magenta-rgb) / 0.6);
 }
 
 .world--avaria[data-state='active'] .cta__corners,
@@ -296,26 +297,24 @@
 
 .cta--avaria:active .cta__frame {
   transform: translateY(0);
-  background-color: rgb(var(--av-amber-rgb) / 0.26);
+  background-color: rgb(var(--av-violet-rgb) / 0.32);
 }
 
 /* ───────────────────────── CTA — המחלבה ───────────────────────── */
 
 .cta--machlava .cta__frame {
-  color: #f4f2ff;
+  color: #f2f6ff;
   border: 1px solid transparent;
   border-radius: 999px;
   background:
-    linear-gradient(rgb(13 13 48 / 0.78), rgb(13 13 48 / 0.78)) padding-box,
-    linear-gradient(115deg, rgb(var(--mc-cyan-rgb) / 0.85), rgb(var(--mc-violet-rgb) / 0.95) 50%, rgb(214 128 255 / 0.7))
+    linear-gradient(115deg, rgb(18 44 150 / 0.92), rgb(46 26 130 / 0.92)) padding-box,
+    linear-gradient(115deg, rgb(var(--mc-cyan-rgb) / 0.95), rgb(var(--mc-blue-rgb) / 0.95) 45%, rgb(var(--mc-violet-rgb) / 0.95))
       border-box;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
 }
 
 .cta--machlava .cta__arrow {
-  color: #c4b6ff;
+  color: #9cc6ff;
 }
 
 /* Soft halo that breathes when the world is active. */
@@ -325,7 +324,7 @@
   z-index: -1;
   border-radius: 999px;
   pointer-events: none;
-  background: radial-gradient(closest-side, rgb(var(--mc-violet-rgb) / 0.42), transparent);
+  background: radial-gradient(closest-side, rgb(var(--mc-blue-rgb) / 0.45), transparent);
   opacity: 0;
   transition: opacity var(--dur-ui) var(--ease-out);
 }
@@ -334,8 +333,8 @@
 .world--machlava[data-state='launching'] .cta__frame {
   transform: translateY(-2px);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.12),
-    0 16px 40px -14px rgb(118 96 255 / 0.85);
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    0 16px 40px -14px rgb(var(--mc-blue-rgb) / 0.9);
 }
 
 .world--machlava[data-state='active'] .cta__corners,
@@ -346,7 +345,7 @@
 
 .cta--machlava:active .cta__frame {
   transform: translateY(0);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16);
 }
 
 @keyframes halo-breathe {
@@ -358,85 +357,16 @@
   }
 }
 
-/* ───────────────────────── Avaria — identity ───────────────────────── */
+/* ───────────────────────── Logos ───────────────────────── */
 
-.world--avaria .world__designation {
-  color: rgb(var(--av-amber-rgb) / 0.82);
+.world--avaria .world__logo {
+  /* The mark is wide and light; the המחלבה lockup is tall and dense. Sizes balance their visual weight. */
+  width: min(33vw, 32rem);
 }
 
-.world--avaria .world__signal {
-  width: 7px;
-  height: 7px;
-  background: var(--av-amber);
-  box-shadow: 0 0 10px rgb(var(--av-hot-rgb) / 0.9);
-  animation: led-pulse 2.8s var(--ease-in-out) infinite;
-}
-
-@keyframes led-pulse {
-  0%,
-  55%,
-  100% {
-    opacity: 1;
-  }
-  70% {
-    opacity: 0.3;
-  }
-}
-
-.world--avaria .world__title {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: min(6.4vw, 13vh);
-  letter-spacing: 0.07em;
-  /* Cancel trailing tracking so the word stays optically centred. */
-  margin-inline-start: 0.07em;
-  background-image: linear-gradient(180deg, #fffaf2 30%, #ffd9a3 100%);
-}
-
-/* ───────────────────────── המחלבה — identity ───────────────────────── */
-
-.world--machlava .world__designation {
-  color: rgb(var(--mc-violet-rgb) / 0.95);
-}
-
-.world--machlava .world__signal {
-  position: relative;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 1.5px solid #bfb2ff;
-  box-shadow: 0 0 10px rgb(var(--mc-violet-rgb) / 0.8);
-}
-
-.world--machlava .world__signal::after {
-  content: '';
-  position: absolute;
-  inset: -1.5px;
-  border-radius: 50%;
-  border: 1px solid rgb(var(--mc-violet-rgb) / 0.8);
-  animation: ping 3.4s var(--ease-out) infinite;
-}
-
-@keyframes ping {
-  0% {
-    transform: scale(1);
-    opacity: 0.9;
-  }
-  70%,
-  100% {
-    transform: scale(2.6);
-    opacity: 0;
-  }
-}
-
-.world--machlava .world__title {
-  font-family: var(--font-hebrew);
-  font-weight: 800;
-  font-size: min(7.2vw, 14.5vh);
-  letter-spacing: -0.01em;
-  line-height: 1;
-  background-image: linear-gradient(180deg, #ffffff 25%, #cdc3ff 100%);
-  filter: drop-shadow(0 0 28px rgb(var(--mc-violet-rgb) / 0.35));
+.world--machlava .world__logo {
+  width: auto;
+  max-height: min(37vh, 23vw);
 }
 
 /* ───────────────────────── Backdrops (shared) ───────────────────────── */
@@ -473,8 +403,8 @@
 .backdrop__vignette {
   inset: 0;
   background:
-    radial-gradient(ellipse 62% 78% at 50% 50%, transparent 40%, rgb(0 0 0 / 0.62) 100%),
-    linear-gradient(to bottom, rgb(0 0 0 / 0.4), transparent 18%, transparent 80%, rgb(0 0 0 / 0.5));
+    radial-gradient(ellipse 62% 78% at 50% 50%, transparent 40%, rgb(0 0 0 / 0.6) 100%),
+    linear-gradient(to bottom, rgb(0 0 0 / 0.35), transparent 18%, transparent 80%, rgb(0 0 0 / 0.45));
 }
 
 .backdrop__scrim {
@@ -493,25 +423,27 @@
 .av-base {
   inset: 0;
   background:
-    radial-gradient(60% 70% at 50% 45%, #1b1a1c 0%, transparent 70%),
-    linear-gradient(180deg, #111012 0%, #0b0b0d 60%, #080809 100%);
+    radial-gradient(58% 70% at 52% 48%, #140d2e 0%, transparent 72%),
+    linear-gradient(180deg, #090719 0%, #06050f 60%, #040309 100%);
 }
 
+/* Dotted technical grid with faint major lines. */
 .av-grid {
   inset: 0;
   background-image:
-    linear-gradient(rgb(255 190 120 / 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 190 120 / 0.08) 1px, transparent 1px),
-    linear-gradient(rgb(255 255 255 / 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 0.03) 1px, transparent 1px);
+    radial-gradient(circle, rgb(176 140 255 / 0.3) 1px, transparent 1.4px),
+    linear-gradient(rgb(var(--av-violet-rgb) / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--av-violet-rgb) / 0.07) 1px, transparent 1px);
   background-size:
-    160px 160px,
-    160px 160px,
-    32px 32px,
-    32px 32px;
-  background-position: right -1px top -1px;
-  -webkit-mask-image: radial-gradient(52% 62% at 74% 52%, #000 15%, transparent 78%);
-  mask-image: radial-gradient(52% 62% at 74% 52%, #000 15%, transparent 78%);
+    24px 24px,
+    144px 144px,
+    144px 144px;
+  background-position:
+    right 12px top 12px,
+    right -1px top -1px,
+    right -1px top -1px;
+  -webkit-mask-image: radial-gradient(54% 64% at 74% 52%, #000 12%, transparent 80%);
+  mask-image: radial-gradient(54% 64% at 74% 52%, #000 12%, transparent 80%);
   opacity: 0.7;
   transition: opacity var(--dur-shift) var(--ease-out);
 }
@@ -519,10 +451,93 @@
 .av-glow {
   inset: 0;
   background:
-    radial-gradient(34% 36% at 76% 104%, rgb(var(--av-hot-rgb) / 0.26), transparent 70%),
-    radial-gradient(20% 26% at 58% 18%, rgb(var(--av-amber-rgb) / 0.07), transparent 70%);
-  opacity: 0.8;
+    radial-gradient(34% 38% at 78% 106%, rgb(var(--av-violet-rgb) / 0.3), transparent 70%),
+    radial-gradient(22% 28% at 60% 14%, rgb(var(--av-magenta-rgb) / 0.09), transparent 70%),
+    radial-gradient(26% 34% at 75% 50%, rgb(var(--av-violet-rgb) / 0.1), transparent 70%);
+  opacity: 0.85;
   transition: opacity var(--dur-shift) var(--ease-out);
+}
+
+/* Radar: rings, ticks and a slow sweep, anchored near the outer edge. */
+.av-radar {
+  right: calc(8% - 21vmin);
+  top: calc(20% - 21vmin);
+  width: 58vmin;
+  aspect-ratio: 1;
+  opacity: 0.7;
+  -webkit-mask-image: radial-gradient(closest-side, #000 55%, rgb(0 0 0 / 0.35) 100%);
+  mask-image: radial-gradient(closest-side, #000 55%, rgb(0 0 0 / 0.35) 100%);
+  transition: opacity var(--dur-shift) var(--ease-out);
+}
+
+.av-radar__rings {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+}
+
+.av-radar__ring {
+  stroke: rgb(var(--av-violet-rgb) / 0.32);
+  stroke-width: 0.35;
+}
+
+.av-radar__ring--outer {
+  stroke: rgb(var(--av-violet-rgb) / 0.5);
+  stroke-width: 0.5;
+}
+
+.av-radar__ring--dotted {
+  stroke: rgb(176 140 255 / 0.5);
+  stroke-width: 0.7;
+  stroke-dasharray: 0.01 2.4;
+  stroke-linecap: round;
+}
+
+.av-radar__cross {
+  stroke: rgb(var(--av-violet-rgb) / 0.2);
+  stroke-width: 0.3;
+}
+
+.av-radar__ticks line {
+  stroke: rgb(176 140 255 / 0.45);
+  stroke-width: 0.35;
+}
+
+.av-radar__blip {
+  fill: rgb(var(--av-magenta-rgb) / 0.95);
+  animation: blip 5s ease-out infinite;
+}
+
+.av-radar__sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgb(var(--av-violet-rgb) / 0.16),
+    rgb(var(--av-violet-rgb) / 0.05) 10%,
+    transparent 22%,
+    transparent 99.4%,
+    rgb(190 150 255 / 0.4)
+  );
+  animation: spin 5s linear infinite;
+}
+
+@keyframes blip {
+  0%,
+  8% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  60%,
+  100% {
+    opacity: 0;
+  }
 }
 
 .av-scan {
@@ -533,9 +548,9 @@
   background: linear-gradient(
     to bottom,
     transparent,
-    rgb(var(--av-amber-rgb) / 0.03) 60%,
-    rgb(var(--av-amber-rgb) / 0.1) 98%,
-    rgb(255 214 160 / 0.2) 100%
+    rgb(var(--av-violet-rgb) / 0.03) 60%,
+    rgb(var(--av-violet-rgb) / 0.1) 98%,
+    rgb(210 180 255 / 0.2) 100%
   );
   -webkit-mask-image: linear-gradient(to right, transparent, #000 25%, #000 80%, transparent);
   mask-image: linear-gradient(to right, transparent, #000 25%, #000 80%, transparent);
@@ -557,59 +572,23 @@
 
 .av-ruler {
   right: clamp(16px, 2.2vw, 34px);
-  top: 18vh;
-  bottom: 18vh;
+  top: 30vh;
+  bottom: 14vh;
   width: 13px;
-  border-right: 1px solid rgb(var(--av-amber-rgb) / 0.35);
+  border-right: 1px solid rgb(var(--av-violet-rgb) / 0.35);
   background:
-    repeating-linear-gradient(to bottom, rgb(var(--av-amber-rgb) / 0.55) 0 1px, transparent 1px 12px) right / 6px
+    repeating-linear-gradient(to bottom, rgb(var(--av-violet-rgb) / 0.55) 0 1px, transparent 1px 12px) right / 6px
       100% no-repeat,
-    repeating-linear-gradient(to bottom, rgb(var(--av-amber-rgb) / 0.8) 0 1px, transparent 1px 60px) right / 13px
-      100% no-repeat;
+    repeating-linear-gradient(to bottom, rgb(176 140 255 / 0.8) 0 1px, transparent 1px 60px) right / 13px 100% no-repeat;
   opacity: 0.5;
-}
-
-.av-reticle {
-  right: 11%;
-  top: 19%;
-  width: clamp(76px, 7.5vw, 124px);
-  height: auto;
-  fill: none;
-  stroke: rgb(var(--av-amber-rgb) / 0.55);
-  stroke-width: 1;
-  opacity: 0.8;
-}
-
-.av-reticle__ring {
-  stroke-dasharray: 2 4;
-  stroke: rgb(var(--av-amber-rgb) / 0.4);
-}
-
-.av-reticle__dot {
-  fill: var(--av-amber);
-  stroke: none;
-}
-
-.av-reticle__brackets {
-  stroke: rgb(var(--av-amber-rgb) / 0.75);
-  stroke-width: 1.5;
-}
-
-.av-reticle__sweep {
-  stroke: #ffc56a;
-  stroke-width: 2;
-  stroke-linecap: round;
-  transform-box: view-box;
-  transform-origin: 50% 50%;
-  animation: spin 7s linear infinite;
 }
 
 .av-trace {
   left: 46%;
   right: 0;
-  bottom: 11vh;
+  bottom: 3vh;
   width: 54%;
-  height: 15vh;
+  height: 12vh;
   overflow: visible;
   fill: none;
   -webkit-mask-image: linear-gradient(to right, transparent, #000 22%, #000 88%, transparent);
@@ -617,19 +596,19 @@
 }
 
 .av-trace__base {
-  stroke: rgb(var(--av-amber-rgb) / 0.26);
+  stroke: rgb(var(--av-violet-rgb) / 0.32);
   stroke-width: 1.25;
   vector-effect: non-scaling-stroke;
 }
 
 .av-trace__pulse {
-  stroke: #ffc56a;
+  stroke: #c9a2ff;
   stroke-width: 1.75;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
   stroke-dasharray: 0.07 0.93;
   stroke-dashoffset: 0.07;
-  filter: drop-shadow(0 0 4px rgb(var(--av-hot-rgb) / 0.9));
+  filter: drop-shadow(0 0 4px rgb(var(--av-magenta-rgb) / 0.9));
   animation: av-trace 6.5s linear infinite;
 }
 
@@ -642,43 +621,13 @@
   }
 }
 
-.av-readouts {
-  right: calc(clamp(16px, 2.2vw, 34px) + 34px);
-  bottom: calc(4.5vh + 22px);
-  display: grid;
-  gap: 5px;
-  font: 400 0.625rem/1 var(--font-mono);
-  letter-spacing: 0.16em;
-  color: rgb(var(--av-amber-rgb) / 0.5);
-}
-
-.av-readouts div {
-  display: flex;
-  justify-content: space-between;
-  gap: 22px;
-}
-
-.av-readouts dd {
-  color: rgb(255 236 210 / 0.55);
-}
-
-.av-hazard {
-  right: calc(clamp(16px, 2.2vw, 34px) + 34px);
-  bottom: 4.5vh;
-  width: 104px;
-  height: 6px;
-  background: repeating-linear-gradient(-45deg, rgb(var(--av-amber-rgb) / 0.75) 0 5px, transparent 5px 10px);
-  opacity: 0.5;
-}
-
 .world--avaria[data-state='active'] .av-grid,
-.world--avaria[data-state='launching'] .av-grid {
-  opacity: 1;
-}
-
+.world--avaria[data-state='launching'] .av-grid,
 .world--avaria[data-state='active'] .av-glow,
 .world--avaria[data-state='launching'] .av-glow,
-.world--avaria[data-state='active'] .av-scan {
+.world--avaria[data-state='active'] .av-scan,
+.world--avaria[data-state='active'] .av-radar,
+.world--avaria[data-state='launching'] .av-radar {
   opacity: 1;
 }
 
@@ -687,16 +636,16 @@
 .mc-base {
   inset: 0;
   background:
-    radial-gradient(56% 70% at 50% 50%, #0f1042 0%, transparent 72%),
-    linear-gradient(180deg, #070824 0%, #04051a 58%, #03030f 100%);
+    radial-gradient(56% 70% at 50% 50%, #0c1b50 0%, transparent 72%),
+    linear-gradient(180deg, #07123a 0%, var(--mc-bg) 58%, #030818 100%);
 }
 
 .mc-nebula {
   inset: 0;
   background:
-    radial-gradient(28% 40% at 22% 26%, rgb(112 64 232 / 0.36), transparent 70%),
-    radial-gradient(30% 38% at 36% 82%, rgb(40 72 224 / 0.3), transparent 70%),
-    radial-gradient(18% 26% at 8% 62%, rgb(190 92 255 / 0.16), transparent 70%);
+    radial-gradient(28% 40% at 24% 24%, rgb(var(--mc-violet-rgb) / 0.3), transparent 70%),
+    radial-gradient(32% 40% at 36% 80%, rgb(var(--mc-blue-rgb) / 0.3), transparent 70%),
+    radial-gradient(20% 30% at 8% 58%, rgb(var(--mc-cyan-rgb) / 0.1), transparent 70%);
   opacity: 0.8;
   animation: breathe 11s ease-in-out infinite alternate;
   transition: opacity var(--dur-shift) var(--ease-out);
@@ -713,12 +662,12 @@
 
 .mc-dots {
   inset: 0;
-  background-image: radial-gradient(circle, rgb(172 176 255 / 0.24) 1px, transparent 1.5px);
+  background-image: radial-gradient(circle, rgb(150 180 255 / 0.22) 1px, transparent 1.5px);
   background-size: 26px 26px;
   background-position: left 13px top 13px;
   -webkit-mask-image: radial-gradient(40% 55% at 20% 55%, #000 10%, transparent 78%);
   mask-image: radial-gradient(40% 55% at 20% 55%, #000 10%, transparent 78%);
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
 .mc-stars {
@@ -770,7 +719,7 @@
   left: calc(8vw - 90vmin);
   bottom: calc(6vh - 90vmin);
   overflow: visible;
-  opacity: 0.75;
+  opacity: 0.7;
   transition: opacity var(--dur-shift) var(--ease-out);
 }
 
@@ -779,7 +728,7 @@
 }
 
 .mc-orbit--dotted {
-  stroke: rgb(178 168 255 / 0.5);
+  stroke: rgb(140 170 255 / 0.5);
   stroke-width: 1.4;
   stroke-dasharray: 0.01 7;
   stroke-linecap: round;
@@ -790,13 +739,13 @@
 }
 
 .mc-orbit--dashed {
-  stroke: rgb(130 170 255 / 0.28);
+  stroke: rgb(110 160 255 / 0.28);
   stroke-width: 0.8;
   stroke-dasharray: 16 10;
 }
 
 .mc-orbit--faint {
-  stroke: rgb(178 168 255 / 0.22);
+  stroke: rgb(150 150 255 / 0.2);
 }
 
 .mc-orbit-spin {
@@ -813,31 +762,31 @@
 }
 
 .mc-sat {
-  fill: rgb(234 232 255 / 0.95);
-  stroke: rgb(214 210 255 / 0.9);
+  fill: rgb(232 238 255 / 0.95);
+  stroke: rgb(210 222 255 / 0.9);
   stroke-width: 0.6;
 }
 
 .mc-sat__panel {
-  fill: rgb(128 140 255 / 0.55);
+  fill: rgb(90 140 255 / 0.6);
 }
 
 .mc-sat__halo {
-  fill: rgb(160 140 255 / 0.16);
+  fill: rgb(110 150 255 / 0.16);
   stroke: none;
 }
 
 .mc-dish {
   left: 4.5%;
   bottom: 4vh;
-  width: clamp(120px, 11.5vw, 210px);
+  width: clamp(110px, 10vw, 190px);
   height: auto;
   overflow: visible;
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
 .mc-dish__ground {
-  stroke: rgb(170 170 255 / 0.35);
+  stroke: rgb(150 170 255 / 0.35);
   stroke-width: 1;
   stroke-dasharray: 2 5;
   stroke-linecap: round;
@@ -849,28 +798,28 @@
 .mc-dish__struts,
 .mc-dish__rim {
   fill: none;
-  stroke: rgb(196 186 255 / 0.62);
+  stroke: rgb(180 196 255 / 0.62);
   stroke-width: 1.3;
   stroke-linejoin: round;
 }
 
 .mc-dish__mount {
-  fill: rgb(20 18 62 / 0.9);
+  fill: rgb(12 22 66 / 0.9);
 }
 
 .mc-dish__bowl {
   fill: url(#mc-dish-fill);
-  stroke: rgb(206 198 255 / 0.72);
+  stroke: rgb(196 210 255 / 0.72);
   stroke-width: 1.3;
 }
 
 .mc-dish__feed {
-  fill: #c9bfff;
+  fill: #b9ccff;
 }
 
 .mc-dish__signal path {
   fill: none;
-  stroke: rgb(186 200 255 / 0.85);
+  stroke: rgb(150 200 255 / 0.85);
   stroke-width: 1.6;
   stroke-linecap: round;
   opacity: 0.12;
@@ -957,11 +906,11 @@
   translate: -50% 0;
   background: linear-gradient(
     to right,
-    rgb(var(--mc-violet-rgb) / 0),
-    rgb(var(--mc-violet-rgb) / 0.65) 30%,
+    rgb(var(--mc-blue-rgb) / 0),
+    rgb(var(--mc-blue-rgb) / 0.7) 30%,
     rgb(255 255 255 / 0.85) 50%,
-    rgb(var(--av-amber-rgb) / 0.65) 70%,
-    rgb(var(--av-amber-rgb) / 0)
+    rgb(var(--av-magenta-rgb) / 0.65) 70%,
+    rgb(var(--av-magenta-rgb) / 0)
   );
   filter: blur(2.5px);
 }
@@ -973,14 +922,14 @@
 }
 
 .seam__bloom--avaria {
-  background: linear-gradient(to right, rgb(var(--av-hot-rgb) / 0.27), rgb(var(--av-amber-rgb) / 0.07) 34%, transparent);
+  background: linear-gradient(to right, rgb(var(--av-magenta-rgb) / 0.22), rgb(var(--av-violet-rgb) / 0.07) 34%, transparent);
   opacity: 0.8;
 }
 
 .seam__bloom--machlava {
   left: auto;
   right: 0;
-  background: linear-gradient(to left, rgb(128 100 255 / 0.26), rgb(90 90 255 / 0.06) 34%, transparent);
+  background: linear-gradient(to left, rgb(var(--mc-blue-rgb) / 0.26), rgb(var(--mc-blue-rgb) / 0.06) 34%, transparent);
   opacity: 0.8;
 }
 
@@ -1020,8 +969,8 @@
 }
 
 .seam__packet--late {
-  background: linear-gradient(to bottom, transparent, #ffd08a 70%, transparent);
-  box-shadow: 0 0 14px 2px rgb(var(--av-amber-rgb) / 0.45);
+  background: linear-gradient(to bottom, transparent, #cfe0ff 70%, transparent);
+  box-shadow: 0 0 14px 2px rgb(var(--mc-blue-rgb) / 0.5);
   animation-delay: 3.75s;
 }
 
@@ -1082,12 +1031,12 @@
 
 .seam__arm--avaria {
   left: 10px;
-  background: linear-gradient(to right, rgb(var(--av-amber-rgb) / 0.95), transparent);
+  background: linear-gradient(to right, rgb(186 130 255 / 0.95), transparent);
 }
 
 .seam__arm--machlava {
   right: 10px;
-  background: linear-gradient(to left, rgb(var(--mc-violet-rgb) / 0.95), transparent);
+  background: linear-gradient(to left, rgb(90 150 255 / 0.95), transparent);
 }
 
 .gateway[data-active='avaria'] .seam__arm--avaria,
@@ -1159,8 +1108,8 @@
   background: #fff;
   box-shadow:
     0 0 8px rgb(255 255 255 / 0.95),
-    -4px 0 18px rgb(var(--mc-violet-rgb) / 0.8),
-    4px 0 18px rgb(var(--av-amber-rgb) / 0.75);
+    -4px 0 18px rgb(var(--mc-blue-rgb) / 0.85),
+    4px 0 18px rgb(var(--av-magenta-rgb) / 0.7);
 }
 
 .brand__tagline {
@@ -1177,6 +1126,43 @@
   color: rgb(236 236 246 / 0.74);
 }
 
+.brand__meta {
+  display: grid;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 502 insignia: small, quiet, never competing with the two systems. */
+.insignia img {
+  display: block;
+  width: 30px;
+  height: auto;
+  opacity: 0.6;
+}
+
+.insignia--brand {
+  display: contents;
+}
+
+.insignia--brand img {
+  display: none;
+}
+
+.insignia--foot {
+  position: absolute;
+  bottom: clamp(16px, 3.2vh, 32px);
+  left: 0;
+  translate: -50% 0;
+  display: flex;
+  /* The beam fades out just above; the two marks straddle its line. */
+  gap: 26px;
+}
+
+.insignia--foot img {
+  width: clamp(28px, 2.1vw, 36px);
+}
+
 /* ───────────────────────── Intro ───────────────────────── */
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1191,7 +1177,8 @@
     animation: fade-in 1.6s var(--ease-out) 0.25s backwards;
   }
 
-  .brand {
+  .brand,
+  .insignia--foot {
     animation: rise-in 0.9s var(--ease-out) 0.3s backwards;
   }
 
@@ -1200,25 +1187,23 @@
   }
 
   /* .cta itself must never carry a transform: it would trap the whole-world hit area (::after). */
-  .world__content > :not(.cta),
-  .cta > * {
+  .world__identity > *,
+  .cta > *,
+  .world__route {
     animation: rise-in 0.9s var(--ease-out) backwards;
   }
 
-  .world__content > :nth-child(1) {
+  .world__title {
     animation-delay: 0.35s;
   }
-  .world__content > :nth-child(2) {
-    animation-delay: 0.45s;
+  .world__tagline {
+    animation-delay: 0.5s;
   }
-  .world__content > :nth-child(3) {
-    animation-delay: 0.55s;
+  .cta > * {
+    animation-delay: 0.6s;
   }
-  .world__content > :nth-child(4) > * {
-    animation-delay: 0.65s;
-  }
-  .world__content > :nth-child(5) {
-    animation-delay: 0.75s;
+  .world__route {
+    animation-delay: 0.72s;
   }
 }
 
@@ -1282,12 +1267,17 @@
     width: min(26rem, 100%);
   }
 
-  .world--avaria .world__title {
-    font-size: clamp(2.75rem, 14vw, 4.5rem);
+  .world__content {
+    height: auto;
   }
 
-  .world--machlava .world__title {
-    font-size: clamp(3rem, 15.5vw, 5rem);
+  .world--avaria .world__logo {
+    width: min(76vw, 22rem);
+  }
+
+  .world--machlava .world__logo {
+    max-height: none;
+    width: min(50vw, 14rem);
   }
 
   .world__tagline {
@@ -1332,7 +1322,9 @@
   }
 
   .av-glow {
-    background: radial-gradient(60% 50% at 50% 110%, rgb(var(--av-hot-rgb) / 0.3), transparent 70%);
+    background:
+      radial-gradient(60% 50% at 50% 110%, rgb(var(--av-violet-rgb) / 0.34), transparent 70%),
+      radial-gradient(40% 40% at 50% 45%, rgb(var(--av-violet-rgb) / 0.1), transparent 70%);
   }
 
   .av-scan {
@@ -1346,8 +1338,11 @@
     bottom: 14%;
   }
 
-  .av-reticle {
-    display: none;
+  .av-radar {
+    right: -22vw;
+    top: -22vw;
+    width: 72vw;
+    opacity: 0.55;
   }
 
   .av-trace {
@@ -1355,11 +1350,6 @@
     width: 100%;
     bottom: 6%;
     height: 14%;
-  }
-
-  .av-readouts,
-  .av-hazard {
-    display: none;
   }
 
   .mc-nebula {
@@ -1425,11 +1415,11 @@
     height: 10px;
     background: linear-gradient(
       to bottom,
-      rgb(var(--av-amber-rgb) / 0),
-      rgb(var(--av-amber-rgb) / 0.65) 30%,
+      rgb(var(--av-magenta-rgb) / 0),
+      rgb(var(--av-magenta-rgb) / 0.65) 30%,
       rgb(255 255 255 / 0.85) 50%,
-      rgb(var(--mc-violet-rgb) / 0.65) 70%,
-      rgb(var(--mc-violet-rgb) / 0)
+      rgb(var(--mc-blue-rgb) / 0.7) 70%,
+      rgb(var(--mc-blue-rgb) / 0)
     );
   }
 
@@ -1442,12 +1432,12 @@
 
   .seam__bloom--avaria {
     translate: 0 -100%;
-    background: linear-gradient(to top, rgb(var(--av-hot-rgb) / 0.22), transparent);
+    background: linear-gradient(to top, rgb(var(--av-magenta-rgb) / 0.2), transparent);
   }
 
   .seam__bloom--machlava {
     translate: 0 0;
-    background: linear-gradient(to bottom, rgb(128 100 255 / 0.28), transparent);
+    background: linear-gradient(to bottom, rgb(var(--mc-blue-rgb) / 0.28), transparent);
   }
 
   .seam__ticks {
@@ -1470,7 +1460,7 @@
   }
 
   .seam__packet--late {
-    background: linear-gradient(to right, transparent, #ffd08a 70%, transparent);
+    background: linear-gradient(to right, transparent, #cfe0ff 70%, transparent);
   }
 
   .seam__core,
@@ -1508,6 +1498,24 @@
     padding: 5px 10px 5px calc(10px + 0.3em);
     font-size: 0.5625rem;
     letter-spacing: 0.3em;
+  }
+
+  /* Insignia flank the tagline instead of sitting at the foot of the seam. */
+  .brand__meta {
+    gap: 10px;
+  }
+
+  .insignia--brand img {
+    display: block;
+    width: 22px;
+  }
+
+  .insignia--brand img:first-child {
+    order: -1;
+  }
+
+  .insignia--foot {
+    display: none;
   }
 }
 
@@ -1556,10 +1564,8 @@
     display: none;
   }
 
-  .av-readouts,
-  .av-hazard,
-  .av-reticle {
-    display: none;
+  .av-radar {
+    width: 44vmin;
   }
 }
 
@@ -1606,12 +1612,6 @@
 /* ───────────────────────── Forced colours ───────────────────────── */
 
 @media (forced-colors: active) {
-  .world__title {
-    -webkit-text-fill-color: CanvasText;
-    background: none;
-    filter: none;
-  }
-
   .cta__frame {
     border: 1px solid ButtonText !important;
     background: ButtonFace !important;

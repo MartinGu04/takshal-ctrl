@@ -2,8 +2,8 @@ import { memo, useMemo } from 'react'
 import { seededRandom } from '../../../lib/random'
 
 /**
- * המחלבה: deep space, SATCOM. Evolves the system's existing blue/indigo/purple identity.
- * Everything here is decorative.
+ * המחלבה: deep navy space, SATCOM — orbits, satellites, stars and a dish, in the blue → violet
+ * of the real המחלבה logo, which sits in front of this. Everything here is decorative.
  */
 
 interface Star {
@@ -14,7 +14,7 @@ interface Star {
   readonly tint: string
 }
 
-const TINTS = ['#ffffff', '#ffffff', '#ffffff', '#d9d4ff', '#c6dcff']
+const TINTS = ['#ffffff', '#ffffff', '#ffffff', '#d6ddff', '#c2d8ff']
 
 function makeStars(seed: number, count: number, minR: number, maxR: number): Star[] {
   const rand = seededRandom(seed)
@@ -85,9 +85,9 @@ function Orbits() {
     <svg className="mc-orbits" viewBox="0 0 1000 1000" focusable="false">
       <defs>
         <linearGradient id="mc-orbit-fade" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0" stopColor="#8f8cff" stopOpacity="0" />
-          <stop offset="0.45" stopColor="#a99bff" stopOpacity="0.55" />
-          <stop offset="1" stopColor="#7fb6ff" stopOpacity="0.15" />
+          <stop offset="0" stopColor="#5b8cff" stopOpacity="0" />
+          <stop offset="0.45" stopColor="#7aa2ff" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#9a7bff" stopOpacity="0.18" />
         </linearGradient>
       </defs>
       <circle cx="500" cy="500" r="210" className="mc-orbit mc-orbit--dotted" />
@@ -113,9 +113,9 @@ function Dish() {
     <svg className="mc-dish" viewBox="0 0 220 200" focusable="false">
       <defs>
         <linearGradient id="mc-dish-fill" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#b8adff" stopOpacity="0.5" />
-          <stop offset="0.5" stopColor="#3a2f86" stopOpacity="0.55" />
-          <stop offset="1" stopColor="#0d0b2e" stopOpacity="0.9" />
+          <stop offset="0" stopColor="#a9c2ff" stopOpacity="0.5" />
+          <stop offset="0.5" stopColor="#23398a" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#081030" stopOpacity="0.9" />
         </linearGradient>
       </defs>
 

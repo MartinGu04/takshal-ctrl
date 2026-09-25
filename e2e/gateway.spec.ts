@@ -20,12 +20,14 @@ const region = (page: Page, name: string) => page.getByRole('region', { name })
 test.beforeEach(async ({ page }) => {
   await stubDestinations(page)
   await page.goto('/')
+  // Park the pointer outside the page so a resting cursor can't emphasise a world.
+  await page.mouse.move(-1, -1)
 })
 
 test('shows the portal identity and both worlds without horizontal scroll', async ({ page }) => {
   await expect(page).toHaveTitle('TAKSHAL CTRL')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('TAKSHAL CTRL')
-  await expect(region(page, 'AVARIA')).toBeVisible()
+  await expect(region(page, 'Avaria')).toBeVisible()
   await expect(region(page, 'המחלבה')).toBeVisible()
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
@@ -33,7 +35,12 @@ test('shows the portal identity and both worlds without horizontal scroll', asyn
 })
 
 test('splits side by side on desktop and stacks on mobile', async ({ page, isMobile }) => {
-  const a = (await region(page, 'AVARIA').boundingBox())!
+  await expect(page.locator('main')).toHaveAttribute('data-active', 'none')
+  // Let any emphasis transition from page load settle before measuring.
+  await expect
+    .poll(async () => (await region(page, 'Avaria').boundingBox())!.width, { timeout: 3000 })
+    .toBeCloseTo(isMobile ? page.viewportSize()!.width : page.viewportSize()!.width / 2, 0)
+  const a = (await region(page, 'Avaria').boundingBox())!
   const m = (await region(page, 'המחלבה').boundingBox())!
   const viewport = page.viewportSize()!
 
@@ -50,21 +57,52 @@ test('splits side by side on desktop and stacks on mobile', async ({ page, isMob
   }
 })
 
+test('supplied logos render crisp and correctly proportioned, with neither side overwhelming', async ({ page }) => {
+  const logos = await page.getByRole('heading', { level: 2 }).locator('img').evaluateAll((imgs) =>
+    (imgs as HTMLImageElement[]).map((img) => {
+      const box = img.getBoundingClientRect()
+      return {
+        alt: img.alt,
+        loaded: img.complete && img.naturalWidth > 0,
+        naturalRatio: img.naturalWidth / img.naturalHeight,
+        renderedRatio: box.width / box.height,
+        // Source pixels available per rendered device pixel (>= 1 means no upscaling blur).
+        density: img.naturalWidth / (box.width * window.devicePixelRatio),
+        area: box.width * box.height,
+      }
+    }),
+  )
+
+  expect(logos.map((l) => l.alt)).toEqual(['Avaria', 'המחלבה'])
+  for (const logo of logos) {
+    expect(logo.loaded, `${logo.alt} loaded`).toBe(true)
+    expect(Math.abs(logo.renderedRatio / logo.naturalRatio - 1), `${logo.alt} aspect ratio`).toBeLessThan(0.01)
+    expect(logo.density, `${logo.alt} crispness`).toBeGreaterThanOrEqual(1)
+  }
+
+  // The wide Avaria mark and the dense המחלבה lockup are sized to comparable visual weight.
+  const [avaria, machlava] = logos
+  const ratio = machlava!.area / avaria!.area
+  expect(ratio).toBeGreaterThan(0.8)
+  expect(ratio).toBeLessThan(2.4)
+})
+
 test('hovering a world makes it dominant (desktop)', async ({ page, isMobile }) => {
   test.skip(isMobile, 'hover only applies to fine pointers')
-  const before = (await region(page, 'AVARIA').boundingBox())!.width
-  await region(page, 'AVARIA').hover()
+  const before = (await region(page, 'Avaria').boundingBox())!.width
+  await region(page, 'Avaria').hover()
   await expect(page.locator('main')).toHaveAttribute('data-active', 'avaria')
-  await expect.poll(async () => (await region(page, 'AVARIA').boundingBox())!.width).toBeGreaterThan(before + 40)
+  await expect.poll(async () => (await region(page, 'Avaria').boundingBox())!.width).toBeGreaterThan(before + 40)
   await page.mouse.move(-1, -1)
   await expect(page.locator('main')).toHaveAttribute('data-active', 'none')
 })
 
 test('is fully keyboard operable', async ({ page, isMobile }) => {
   test.skip(isMobile, 'keyboard flow is checked on desktop')
+  await page.mouse.move(-1, -1)
   await page.keyboard.press('Tab')
   await expect(avaria(page)).toBeFocused()
-  await expect(region(page, 'AVARIA')).toHaveAttribute('data-state', 'active')
+  await expect(region(page, 'Avaria')).toHaveAttribute('data-state', 'active')
 
   const ring = await avaria(page)
     .locator('.cta__frame')
@@ -77,6 +115,14 @@ test('is fully keyboard operable', async ({ page, isMobile }) => {
 
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(E2E_MACHLAVA_URL)
+})
+
+test('keyboard focus takes emphasis from a resting mouse (desktop)', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'hover only applies to fine pointers')
+  await region(page, 'המחלבה').hover()
+  await expect(page.locator('main')).toHaveAttribute('data-active', 'machlava')
+  await avaria(page).focus()
+  await expect(page.locator('main')).toHaveAttribute('data-active', 'avaria')
 })
 
 test('enters Avaria in the same tab', async ({ page, context }) => {
@@ -112,16 +158,17 @@ test.describe('reduced motion', () => {
   test.use({ contextOptions: { reducedMotion: 'reduce' } })
 
   test('keeps the split static, runs no animations, and navigates directly', async ({ page, isMobile }) => {
+    // Transitions (short opacity/colour fades) are allowed; keyframe animations are not.
     const running = await page.evaluate(
-      () => document.getAnimations().filter((a) => a.playState === 'running').length,
+      () => document.getAnimations().filter((a) => a instanceof CSSAnimation && a.playState === 'running').length,
     )
     expect(running).toBe(0)
 
     if (!isMobile) {
-      const before = (await region(page, 'AVARIA').boundingBox())!.width
-      await region(page, 'AVARIA').hover()
-      await expect(region(page, 'AVARIA')).toHaveAttribute('data-state', 'active')
-      expect((await region(page, 'AVARIA').boundingBox())!.width).toBeCloseTo(before, 0)
+      const before = (await region(page, 'Avaria').boundingBox())!.width
+      await region(page, 'Avaria').hover()
+      await expect(region(page, 'Avaria')).toHaveAttribute('data-state', 'active')
+      expect((await region(page, 'Avaria').boundingBox())!.width).toBeCloseTo(before, 0)
     }
 
     await avaria(page).click()

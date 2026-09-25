@@ -22,11 +22,12 @@ npm run dev
 | `npm run lint`      | oxlint (incl. jsx-a11y rules)                  |
 | `npm run typecheck` | TypeScript, no emit                            |
 | `npm test`          | Unit/component tests (Vitest + Testing Library)|
-| `npm run test:e2e`  | Playwright, desktop + mobile, against a build  |
+| `npm run test:e2e`  | Playwright, desktop + mobile, against a build (incl. visual snapshots) |
 | `npm run check`     | lint → typecheck → unit tests → build          |
 
 For `test:e2e`, run `npx playwright install chromium` once, or point
-`PLAYWRIGHT_CHROMIUM_EXECUTABLE` at an existing Chromium.
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE` at an existing Chromium. After an intentional visual change,
+refresh the baselines with `npx playwright test e2e/visual.spec.ts --update-snapshots`.
 
 ## Configuring destinations
 
@@ -42,7 +43,25 @@ else — missing, malformed, `javascript:`, `data:` — is rejected by
 [`src/config/destination.ts`](src/config/destination.ts) and that entry renders as
 "not configured" instead of as a broken link.
 
-Display copy (names, taglines, CTA labels) lives in [`src/config/systems.ts`](src/config/systems.ts).
+Display copy (names, taglines, CTA labels) and each system's logo live in
+[`src/config/systems.ts`](src/config/systems.ts).
+
+## Brand assets
+
+The supplied logos are the source of truth and are never redrawn or recoloured.
+
+| Original (`brand/source/`)          | Web asset (`src/assets/brand/`)      | Used for                            |
+| ----------------------------------- | ------------------------------------ | ----------------------------------- |
+| `avaria-logo.png`                   | `avaria-logo.webp`                   | Avaria world heading                |
+| `machlava-logo.webp`                | `machlava-logo.webp`                 | המחלבה world heading (one use only) |
+| `502-strategic-communication.webp`  | `502-strategic-communication.webp`   | quiet shell insignia                |
+| `502-satcom.webp`                   | `502-satcom.webp`                    | quiet shell insignia                |
+
+Web assets are produced by `python3 scripts/prepare-brand-assets.py` (Pillow + numpy). It only
+crops empty canvas and converts each logo's flat background colour to transparency (GIMP's
+colour-to-alpha), so the result composited over the original background is identical to the
+source; the script prints the re-composite error as proof. The המחלבה emblem's own circular
+night sky is kept fully opaque. To update a logo, replace the original and re-run the script.
 
 Set the variables in your host's build settings (Vercel, Netlify, Cloudflare Pages, GitHub
 Actions…) and deploy `dist/` as a static site.
@@ -77,8 +96,15 @@ src/
   and lifts its CTA; the other recedes. The whole half is the click/tap target. On click the
   chosen world fills the screen for ~0.5s, then navigates. Modified clicks (⌘/Ctrl/Shift, middle
   click) are left to the browser.
-- **Motion identities.** Avaria: scan sweep, LED pulse, reticle sweep, signal trace. המחלבה:
-  orbital drift, star twinkle, nebula breathing, dish signal.
+- **Brand-true worlds.** Avaria: near-black navy, violet, a touch of magenta, dotted technical
+  grid, radar rings and a heartbeat line, from the real Avaria mark. המחלבה: deep navy space,
+  electric blue → violet, orbits, satellites, stars and a dish, from the real המחלבה logo. The
+  portal itself (wordmark, seam core) stays neutral white; the seam glows blue on the המחלבה
+  side and violet/magenta on the Avaria side.
+- **Motion identities.** Avaria: radar sweep, scan line, heartbeat pulse. המחלבה: orbital drift,
+  star twinkle, nebula breathing, dish signal.
+- **No fake telemetry.** The only status text is real: each entry's destination host, and
+  "CONNECTING" during the hand-off.
 - **Reduced motion.** All animation stops, the split no longer moves, links navigate directly.
   The static composition is designed to stand on its own.
 - **Backdrops are sized to the viewport, not the half,** so the seam slides over them like a

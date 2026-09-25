@@ -80,16 +80,22 @@ export function World({ system, state, interceptNavigation, onHover, onFocus, on
       <Backdrop />
 
       <div className="world__content">
-        <p className="world__designation" dir="ltr">
-          <span className="world__signal" aria-hidden="true" />
-          {system.designation}
-        </p>
+        <div className="world__identity">
+          <h2 id={titleId} className="world__title">
+            <img
+              className="world__logo"
+              src={system.logo.src}
+              width={system.logo.width}
+              height={system.logo.height}
+              alt={system.name}
+              decoding="async"
+              fetchPriority="high"
+              draggable={false}
+            />
+          </h2>
 
-        <h2 id={titleId} className="world__title" lang={system.nameLang}>
-          {system.name}
-        </h2>
-
-        <p className="world__tagline">{system.tagline}</p>
+          {system.tagline && <p className="world__tagline">{system.tagline}</p>}
+        </div>
 
         {destination.ok ? (
           // Labelled by the nested .cta__label text, which the rule cannot see through.
