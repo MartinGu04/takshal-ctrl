@@ -49,11 +49,13 @@ export function isPrivilegedKey(value: unknown): boolean {
 }
 
 /**
- * Names of browser-exposed (`VITE_`-prefixed) variables whose value is a privileged key.
- * Such a value would be baked into the public bundle, so the build refuses it.
+ * Names of browser-exposed (`VITE_`-prefixed) variables that hold a secret: a privileged Supabase
+ * key by value, or anything named as a secret (e.g. a source credential such as
+ * `VITE_MACHLAVA_SOURCE_SECRET`). Such a value would be baked into the public bundle, so the
+ * build refuses it.
  */
 export function findClientExposedSecrets(env: Record<string, string | undefined>): string[] {
   return Object.entries(env)
-    .filter(([name, value]) => name.startsWith('VITE_') && isPrivilegedKey(value?.trim()))
+    .filter(([name, value]) => name.startsWith('VITE_') && (isPrivilegedKey(value?.trim()) || (/SECRET/i.test(name) && Boolean(value?.trim()))))
     .map(([name]) => name)
 }

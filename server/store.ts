@@ -26,6 +26,18 @@ export interface NotificationEvent {
   readonly removed: number
 }
 
+/** Identifies one source notification: `(source, eventId)` is delivered at most once. */
+export interface SourceEventKey {
+  readonly source: NotificationSource
+  readonly eventId: string
+}
+
+export interface SourceEventClaim extends SourceEventKey {
+  readonly userId: string
+  /** An unfinished claim older than this may be taken over (the earlier attempt crashed). */
+  readonly leaseSeconds: number
+}
+
 export interface SubscriptionStore {
   /**
    * Inserts or updates by endpoint (endpoints are unique). An endpoint re-registered by a
@@ -45,4 +57,19 @@ export interface SubscriptionStore {
   recordFailure(id: string, disableAfter: number): Promise<void>
   recordEvent(event: NotificationEvent): Promise<void>
   countEventsSince(userId: string, kind: NotificationEvent['kind'], sinceIso: string): Promise<number>
+
+  /**
+   * Records `email` (normalized, verified by Supabase Auth) as `userId`'s recipient address for
+   * trusted sources. An address maps to at most one user: the latest verified session wins.
+   */
+  rememberRecipient(userId: string, email: string): Promise<void>
+  /** The user a normalized verified email belongs to, or null. */
+  findRecipientUserId(email: string): Promise<string | null>
+  /**
+   * Atomically claims a source event for delivery. False when it was already claimed (a retry or
+   * a concurrent duplicate) — unless the earlier claim never completed within its lease.
+   */
+  claimSourceEvent(claim: SourceEventClaim): Promise<boolean>
+  /** Marks a claimed source event as delivered, with its outcome counts. */
+  completeSourceEvent(key: SourceEventKey, report: { delivered: number; failed: number; removed: number }): Promise<void>
 }

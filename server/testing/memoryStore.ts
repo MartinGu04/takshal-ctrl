@@ -2,9 +2,19 @@
 
 import type { NotificationEvent, StoredSubscription, SubscriptionStore } from '../store.js'
 
+export interface MemoryEvent extends NotificationEvent {
+  readonly createdAt: string
+  /** Source events only. */
+  readonly eventId?: string
+  readonly status?: 'processing' | 'completed'
+  readonly claimedAt?: string
+}
+
 export function memoryStore(clock: () => number = Date.now) {
   const rows = new Map<string, StoredSubscription>()
-  const events: (NotificationEvent & { createdAt: string })[] = []
+  const events: MemoryEvent[] = []
+  /** user id → normalized verified email (the `notification_recipients` table). */
+  const recipients = new Map<string, string>()
   let seq = 0
   const iso = () => new Date(clock()).toISOString()
   const byEndpoint = (endpoint: string) => [...rows.values()].find((row) => row.endpoint === endpoint) ?? null
@@ -82,7 +92,32 @@ export function memoryStore(clock: () => number = Date.now) {
     async countEventsSince(userId, kind, sinceIso) {
       return events.filter((event) => event.userId === userId && event.kind === kind && event.createdAt >= sinceIso).length
     },
+    async rememberRecipient(userId, email) {
+      for (const [otherUserId, otherEmail] of recipients) if (otherEmail === email && otherUserId !== userId) recipients.delete(otherUserId)
+      recipients.set(userId, email)
+    },
+    async findRecipientUserId(email) {
+      for (const [userId, recipientEmail] of recipients) if (recipientEmail === email) return userId
+      return null
+    },
+    // No await between the lookup and the write: atomic, like the SQL function.
+    async claimSourceEvent({ source, eventId, userId, leaseSeconds }) {
+      const index = events.findIndex((event) => event.source === source && event.eventId === eventId)
+      if (index === -1) {
+        events.push({ userId, source, kind: 'source', delivered: 0, failed: 0, removed: 0, createdAt: iso(), eventId, status: 'processing', claimedAt: iso() })
+        return true
+      }
+      const existing = events[index]!
+      const expired = existing.status === 'processing' && Date.parse(existing.claimedAt!) < clock() - leaseSeconds * 1000
+      if (!expired) return false
+      events[index] = { ...existing, userId, claimedAt: iso() }
+      return true
+    },
+    async completeSourceEvent({ source, eventId }, report) {
+      const index = events.findIndex((event) => event.source === source && event.eventId === eventId)
+      if (index !== -1) events[index] = { ...events[index]!, ...report, status: 'completed' }
+    },
   }
 
-  return { store, rows, events }
+  return { store, rows, events, recipients }
 }

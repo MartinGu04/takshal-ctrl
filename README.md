@@ -85,11 +85,14 @@ src/
   sw/                     service worker (logic.ts is pure and unit-tested)
   lib/  styles/  App.tsx  shared hooks, tokens, app shell
 server/                   Notification Hub (framework-agnostic Request → Response handlers)
-  handlers.ts             subscribe / unsubscribe / status / test / rotate
+  handlers.ts             subscribe / unsubscribe / status / test / rotate / source notify
   delivery.ts             fan-out, dead-subscription cleanup
   validation.ts           PushSubscription + push-service allowlist
+  source.ts               trusted-source credentials + versioned notify request
+  identity.ts             verified-email normalization (cross-system recipient identity)
   auth.ts  store*.ts  sender.ts  env.ts  deps.ts
 api/push/*.ts             Vercel functions (thin adapters over server/handlers.ts)
+api/source/machlava/notify.ts  המחלבה's server-to-server ingress
 supabase/migrations/      database schema, RLS, grants
 ```
 
@@ -121,19 +124,20 @@ supabase/migrations/      database schema, RLS, grants
   window instead of stretching them.
 - Fonts are self-hosted (Space Grotesk, Heebo, JetBrains Mono) — no third-party requests.
 
-## Notification Hub (v0.2.0)
+## Notification Hub (v0.3.0)
 
 TAKSHAL CTRL is the single installed PWA that owns the Web Push subscription for **both**
 Avaria and המחלבה. The portal stays fully usable anonymously; Google sign-in is required only
 when someone chooses to enable or manage notifications (the bell in the top-left corner).
 
 ```
-Avaria backend ────┐   (next phase: per-source credentials)
+Avaria backend ────┐   (not yet connected)
                    ├──▶ TAKSHAL CTRL Notification Hub ──▶ Web Push (FCM / Mozilla / Apple)
 המחלבה backend ────┘          │                                    │
-                     Supabase: auth.users,                 TAKSHAL CTRL service worker
-                     push_subscriptions,                   → branded notification
-                     notification_events                   → click → /open → validated destination
+ (v0.3.0: POST /api/source/   Supabase: auth.users,        TAKSHAL CTRL service worker
+  machlava/notify)            push_subscriptions,          → branded notification
+                              notification_recipients,     → click → /open → validated destination
+                              notification_events
 ```
 
 ### What is implemented
@@ -152,7 +156,8 @@ Avaria backend ────┐   (next phase: per-source credentials)
 API (all `POST`, JSON, same origin; all but `rotate` require `Authorization: Bearer <Supabase access token>`):
 `/api/push/subscribe`, `/api/push/unsubscribe`, `/api/push/status`, `/api/push/test`,
 `/api/push/rotate` (called by the service worker; authorised by possession of the previous
-endpoint). There is deliberately **no** public "send notification" endpoint.
+endpoint). There is deliberately **no** public "send notification" endpoint; the only way to
+notify another user is the server-to-server source ingress below.
 
 ### Notification payload (v1)
 
@@ -180,6 +185,7 @@ URLs, `//host`, backslashes, whitespace/control characters and `javascript:` are
 ### Security properties
 
 - Recipients are always derived from the verified session; the browser never names a user or email.
+  Trusted sources name a recipient only by verified email, server-to-server, with their own credential.
 - Supabase **secret key** (`sb_secret_…`) and **VAPID private key** exist only in server env vars
   (never `VITE_`-prefixed, never bundled). The **publishable key** (`sb_publishable_…`) in the
   bundle cannot read or write the hub tables: RLS is on with no policies, and privileges are
@@ -190,7 +196,9 @@ URLs, `//host`, backslashes, whitespace/control characters and `javascript:` are
 - JSON-only bodies (≤ 8 KB), strict validation on every field, no CORS (cross-origin calls fail
   preflight), `Cache-Control: no-store` on API responses.
 - Stored personal data is minimal: Supabase user id, the subscription, an optional coarse
-  device label ("iOS · Home Screen") — no raw user agent, no notification content.
+  device label ("iOS · Home Screen"), and (v0.3.0) the user's verified email in the server-only
+  `notification_recipients` table so trusted sources can address them — no raw user agent, no
+  notification content.
 
 ### Setup — what you still need to do manually
 
@@ -245,10 +253,11 @@ Do not commit them. The public key goes into `VITE_VAPID_PUBLIC_KEY`, the privat
 | `SUPABASE_SECRET_KEY` | **server secret** | secret key, `sb_secret_…` |
 | `VAPID_PRIVATE_KEY` | **server secret** | VAPID private key |
 | `VAPID_SUBJECT` | server | `mailto:you@yourdomain` (or an `https://` URL) |
+| `MACHLAVA_SOURCE_SECRET` | **server secret** | המחלבה source credential, ≥ 32 chars (`openssl rand -hex 32`) — see *Trusted source ingress* |
 
 **6. Vercel environment variables.** Project → Settings → Environment Variables: add all
-seven above for **Production** and **Preview** (mark `SUPABASE_SECRET_KEY` and
-`VAPID_PRIVATE_KEY` as *Sensitive*), then redeploy. `VITE_*` values are baked in at build time,
+of the above for **Production** and **Preview** (mark `SUPABASE_SECRET_KEY`,
+`VAPID_PRIVATE_KEY` and `MACHLAVA_SOURCE_SECRET` as *Sensitive*), then redeploy. `VITE_*` values are baked in at build time,
 so a redeploy is required after changing them. The `api/` directory is deployed as Vercel
 Functions automatically; `vercel.json` adds the `/open` rewrite and `sw.js` cache headers.
 
@@ -283,19 +292,82 @@ the banner). Tapping it opens TAKSHAL CTRL. Up to 5 tests per 10 minutes per use
 - [ ] Remove the Home Screen app, then send a test from another device: the dead iPhone
       subscription is deleted on the next send (410 from Apple).
 
-**10. Next phase: Avaria and המחלבה integration (designed, not implemented).**
-- New protected server endpoints, e.g. `POST /api/v1/sources/avaria/notify` and
-  `/api/v1/sources/machlava/notify`, each with its **own** credential
-  (`HUB_SOURCE_SECRET_AVARIA`, `HUB_SOURCE_SECRET_MACHLAVA`), verified as an HMAC over the
-  body plus a timestamp (replay window). A leaked Avaria credential cannot act as המחלבה:
-  the source identity comes from the credential, never from the request body.
-- The source addresses a recipient by the verified Google email of the TAKSHAL CTRL user;
-  the hub resolves it to a Supabase user id server-side.
-- The hub builds the payload with `createNotificationPayload({ source, title, body, target })`
-  (source fixed by the credential), delivers with `deliver()` (`server/delivery.ts`), and records
-  a `notification_events` row with `kind = 'source'`.
-- Avaria and המחלבה keep their own repositories and databases; they only gain a server-side
-  call to the hub. No change to them is needed in this phase.
+### Trusted source ingress: המחלבה → hub (v0.3.0)
+
+`POST /api/source/machlava/notify` lets המחלבה's **server** deliver one of its notifications to a
+user's TAKSHAL CTRL devices, as an *additional* channel next to המחלבה's own push. It is not a
+public endpoint:
+
+- **Credential.** `Authorization: Bearer <MACHLAVA_SOURCE_SECRET>`, a secret dedicated to
+  המחלבה (≥ 32 chars; the same value is `TAKSHAL_CTRL_SOURCE_SECRET` in המחלבה). Compared in
+  constant time (SHA-256 of both sides + `timingSafeEqual`). Missing/short secret on the hub ⇒
+  every request is rejected (401). The source is fixed by the route + credential: the body can
+  never name a source, an icon or a URL, so a leaked credential for one source can never send
+  as another (a future Avaria ingress gets its own route and secret).
+- **Transport rules.** POST only, `application/json` only, ≤ 8 KB, no CORS (browsers cannot call
+  it cross-origin), `Cache-Control: no-store`.
+- **Request (v1)** — strict: unknown fields are rejected, not ignored.
+
+  ```jsonc
+  {
+    "version": 1,
+    "eventId": "job:3f7a0c52-…",          // required, stable, [A-Za-z0-9._:-]{1,128}
+    "recipientEmail": "user@example.com",  // verified address from the source's server-side identity
+    "title": "≤ 120 chars",
+    "body": "≤ 500 chars",
+    "target": "/schedule",                 // required safe relative path inside המחלבה ("/" if none)
+    "tag": "machlava-…",                   // optional, [A-Za-z0-9._:-]{1,64}
+    "timestamp": 1760000000000             // optional, ms
+  }
+  ```
+
+  Title, body, target, tag and timestamp are validated by the exact rules of the Web Push
+  payload (`parseNotificationPayload`), so an accepted request always yields a valid push:
+  source `machlava`, the trusted local icon `/icons/notify-machlava-192.png`, title shown as
+  `המחלבה · …`, and a click through `/open?app=machlava&target=…` to
+  `https://luzly.vercel.app/<target>` (the base URL is the hub's, never the caller's).
+- **Recipient identity.** A verified, normalized (trimmed + lowercased) Google email.
+  `notification_recipients` maps it to the TAKSHAL CTRL user; the hub writes that mapping only
+  from the **verified Supabase session** (`email_confirmed_at` set), on every authenticated
+  `status` and `subscribe` call — so an already-enrolled user acquires it simply by opening
+  TAKSHAL CTRL (the bell panel's status check). An address maps to one user; the latest verified
+  session wins. The table is server-only (RLS on, no policies, privileges revoked from
+  `anon`/`authenticated`).
+- **Delivery.** Resolve email → user → all *active* subscriptions → the existing `deliver()`
+  (same fan-out, 404/410 removal and failure-count disabling as every other push) → the event is
+  recorded in `notification_events` (`kind = 'source'`, counts only, no content).
+- **Idempotency.** `notification_events` has a unique `(source, event_id)`. The event is claimed
+  atomically in SQL (`claim_source_notification_event`: `insert … on conflict do nothing`) before
+  anything is sent, so a retry or any number of concurrent duplicates push exactly once. A claim
+  whose attempt crashed before completing can be taken over after a 120 s lease.
+- **Abuse protection.** Per recipient, at most 30 source notifications per 10 minutes (429 +
+  `Retry-After`; a rate-limited event is not consumed, so a later retry can still deliver).
+- **Responses** (the source needs no more than this; an unknown address and a user without active
+  devices are indistinguishable):
+
+  | Case | Status | Body |
+  | --- | --- | --- |
+  | delivered | 200 | `{ "accepted": true, "delivered": n, "failed": f, "removed": r }` |
+  | not enrolled / no active device | 200 | `{ "accepted": true, "delivered": 0, "reason": "no_active_subscription" }` |
+  | same `eventId` again | 200 | `{ "accepted": true, "duplicate": true, "delivered": 0 }` |
+  | bad / missing credential | 401 | `{ "error": "unauthorized" }` |
+  | malformed request | 400 | `{ "error": "<code>" }` (`unknown-field`, `invalid-recipient`, `unsafe-target`, …) |
+  | rate limited | 429 | `{ "error": "rate-limited", "retryAfter": 600 }` |
+  | hub not configured | 503 | `{ "error": "not-configured" }` |
+
+- **Logs** carry the source, a 6-character event-id tail and counts only — never the secret, the
+  email, endpoints or notification text.
+
+**Setup (in addition to steps 1–6 above):**
+
+1. Apply `supabase/migrations/20260925200000_source_ingress.sql` (SQL Editor, or `supabase db push`).
+   It is additive and re-runnable; the v0.2.0 migration is unchanged.
+2. Generate the shared secret once: `openssl rand -hex 32`.
+3. Vercel → TAKSHAL CTRL → Settings → Environment Variables: `MACHLAVA_SOURCE_SECRET` = that value,
+   **Production + Preview**, marked *Sensitive*. Redeploy.
+4. Put the same value in המחלבה's `TAKSHAL_CTRL_SOURCE_SECRET` (see המחלבה's README).
+5. Each recipient opens TAKSHAL CTRL once while signed in (with notifications enabled) so the
+   status check records their verified email.
 
 ### Icons
 

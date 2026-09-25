@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { supabaseAuthenticator } from './auth.js'
-import { readHubEnv } from './env.js'
+import { readHubEnv, readSourceSecrets } from './env.js'
+import { parseEmail } from './identity.js'
 import { endpointFingerprint, isAllowedPushEndpoint } from './validation.js'
 
 describe('hub environment', () => {
@@ -72,5 +73,53 @@ describe('Supabase authenticator', () => {
     expect(await auth.verify('good')).toEqual({ id: 'u1' })
     expect(await auth.verify('anon')).toBeNull()
     expect(await auth.verify('bad')).toBeNull()
+  })
+
+  it('exposes the email only when Supabase Auth has verified it, normalized', async () => {
+    const auth = supabaseAuthenticator({
+      auth: {
+        async getUser(jwt) {
+          const base = { id: jwt, aud: 'authenticated', email: '  Op.Erator@Example.COM ' }
+          if (jwt === 'verified') return { data: { user: { ...base, email_confirmed_at: '2026-01-01T00:00:00Z' } }, error: null }
+          if (jwt === 'unverified') return { data: { user: { ...base, email_confirmed_at: null } }, error: null }
+          return { data: { user: { id: jwt, aud: 'authenticated', email: 'not-an-email', email_confirmed_at: '2026-01-01T00:00:00Z' } }, error: null }
+        },
+      },
+    })
+    expect(await auth.verify('verified')).toEqual({ id: 'verified', verifiedEmail: 'op.erator@example.com' })
+    expect(await auth.verify('unverified')).toEqual({ id: 'unverified' })
+    expect(await auth.verify('malformed')).toEqual({ id: 'malformed' })
+  })
+})
+
+describe('recipient email normalization', () => {
+  it('trims and lowercases', () => expect(parseEmail(' Alice@Example.COM\n')).toBe('alice@example.com'))
+
+  it.each(['', 'alice', 'alice@', '@example.com', 'alice@example', 'a b@example.com', 'alice@exa mple.com', 'alice@@example.com', `${'a'.repeat(250)}@example.com`, null, 42])(
+    'rejects %j',
+    (value) => expect(parseEmail(value)).toBeNull(),
+  )
+})
+
+describe('source credentials', () => {
+  const strong = 'f'.repeat(64)
+
+  it('reads MACHLAVA_SOURCE_SECRET (server-only name)', () => {
+    expect(readSourceSecrets({ MACHLAVA_SOURCE_SECRET: ` ${strong} ` })).toEqual({ secrets: { machlava: strong }, problems: [] })
+  })
+
+  it('leaves a missing source unconfigured', () => {
+    expect(readSourceSecrets({})).toEqual({ secrets: {}, problems: [] })
+  })
+
+  it('ignores a VITE_-prefixed copy: the browser-exposed name is never read', () => {
+    expect(readSourceSecrets({ VITE_MACHLAVA_SOURCE_SECRET: strong })).toEqual({ secrets: {}, problems: [] })
+  })
+
+  it('refuses a weak secret without echoing it', () => {
+    const result = readSourceSecrets({ MACHLAVA_SOURCE_SECRET: 'short-secret' })
+    expect(result.secrets).toEqual({})
+    expect(result.problems).toEqual([expect.stringContaining('MACHLAVA_SOURCE_SECRET')])
+    expect(result.problems.join()).not.toContain('short-secret')
   })
 })
