@@ -12,8 +12,15 @@
 
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --dur-shift: 420ms;
   --dur-ui: 280ms;
+
+  /* The split: quick to answer, long to settle; gentle on the way home; one glide when crossing. */
+  --ease-split: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --dur-split: 620ms;
+  --ease-settle: cubic-bezier(0.45, 0.05, 0.25, 1);
+  --dur-settle: 780ms;
+  --ease-cross: cubic-bezier(0.38, 0.12, 0.2, 1);
+  --dur-cross: 680ms;
 
   /* Portal (neutral) */
   --ctrl-ink: #030306;

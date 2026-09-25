@@ -17,6 +17,28 @@
   min-height: 22rem;
   overflow: hidden;
   background: var(--ctrl-ink);
+  /*
+   * How far the active world leans in. The worlds' 4vw side padding sits outside the flex share,
+   * so 1 ± 0.167 lands on a 57/43 split at every width.
+   */
+  --lean: 0.167;
+  /* Pointer position for the micro-parallax, -1…1 (written by useParallax). */
+  --px: 0;
+  --py: 0;
+  /*
+   * One timing for everything that follows the split — panels, seam, glows, emphasis — so they
+   * move as one. The destination state picks it: settle home, lean in, or glide across.
+   */
+  --t-split: var(--dur-settle) var(--ease-settle);
+}
+
+.gateway[data-active='avaria'],
+.gateway[data-active='machlava'] {
+  --t-split: var(--dur-split) var(--ease-split);
+}
+
+.gateway[data-crossing] {
+  --t-split: var(--dur-cross) var(--ease-cross);
 }
 
 .world {
@@ -29,7 +51,7 @@
   overflow: hidden;
   padding: clamp(96px, 16vh, 168px) 4vw clamp(40px, 8vh, 96px);
   color: var(--world-text);
-  transition: flex-grow var(--dur-shift) var(--ease-out), opacity var(--dur-shift) var(--ease-out);
+  transition: flex-grow var(--t-split), opacity var(--t-split);
 }
 
 .world--avaria {
@@ -53,18 +75,21 @@
 /* Hover / focus: the active world becomes dominant, the seam drifts toward the other. */
 .gateway[data-active='avaria'] .world--avaria,
 .gateway[data-active='machlava'] .world--machlava {
-  flex-grow: 1.16;
+  flex-grow: calc(1 + var(--lean));
 }
 
 .gateway[data-active='avaria'] .world--machlava,
 .gateway[data-active='machlava'] .world--avaria {
-  flex-grow: 0.84;
+  flex-grow: calc(1 - var(--lean));
 }
 
-/* Hand-off: the chosen world takes the screen before navigation. */
+/*
+ * Hand-off: the chosen world takes the screen. Navigation starts shortly after the click
+ * (useLaunch), so this front-loads its movement and simply keeps playing until the page changes.
+ */
 .gateway[data-launching] .world {
-  transition-duration: 520ms;
-  transition-timing-function: var(--ease-in-out);
+  transition-duration: 460ms;
+  transition-timing-function: var(--ease-out);
 }
 
 .gateway[data-launching='avaria'] .world--avaria,
@@ -76,6 +101,56 @@
 .gateway[data-launching='machlava'] .world--avaria {
   flex-grow: 0.0001;
   opacity: 0.4;
+}
+
+/* Click confirmation: one pulse of light runs from the seam into the chosen world. */
+.world::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(80% 90% at var(--seam-at), rgb(var(--pulse-rgb) / 0.2), transparent 70%);
+  opacity: 0;
+  transform-origin: var(--seam-at);
+}
+
+.world--avaria {
+  --seam-at: 0% 50%;
+  --pulse-rgb: 170 110 255;
+}
+
+.world--machlava {
+  --seam-at: 100% 50%;
+  --pulse-rgb: 70 135 255;
+}
+
+.world[data-state='launching']::after {
+  animation: launch-pulse 520ms var(--ease-out);
+}
+
+.world[data-state='launching'] .world__identity {
+  animation: launch-kick 420ms var(--ease-out);
+}
+
+@keyframes launch-pulse {
+  from {
+    opacity: 0;
+    scale: 0.5;
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 1.05;
+  }
+}
+
+@keyframes launch-kick {
+  25% {
+    filter: brightness(1.28);
+  }
 }
 
 /* ───────────────────────── World content ───────────────────────── */
@@ -91,11 +166,12 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  transition: opacity var(--dur-shift) var(--ease-out);
+  transition: opacity var(--t-split);
 }
 
+/* The other world calms a little — felt more than seen, and always fully readable. */
 .world[data-state='receded'] .world__content {
-  opacity: 0.62;
+  opacity: 0.8;
 }
 
 .world[data-state='dormant'] .world__content {
@@ -114,7 +190,7 @@
 .world__title {
   display: flex;
   justify-content: center;
-  transition: transform var(--dur-shift) var(--ease-out);
+  transition: transform var(--t-split);
 }
 
 /* Avaria's short violet accent under the mark, as on its entry screen. */
@@ -138,6 +214,13 @@
   height: auto;
   user-select: none;
   -webkit-user-drag: none;
+  transition: filter var(--t-split);
+}
+
+/* A touch more light in the active mark. */
+.world[data-state='active'] .world__logo,
+.world[data-state='launching'] .world__logo {
+  filter: brightness(1.07);
 }
 
 .world__tagline {
@@ -187,10 +270,16 @@
   white-space: nowrap;
   transition:
     transform var(--dur-ui) var(--ease-out),
+    scale 140ms var(--ease-out),
     background-color var(--dur-ui) var(--ease-out),
     border-color var(--dur-ui) var(--ease-out),
     box-shadow var(--dur-ui) var(--ease-out),
     color var(--dur-ui) var(--ease-out);
+}
+
+/* Press: the frame gives slightly under the pointer or finger. */
+.cta:active .cta__frame {
+  scale: 0.98;
 }
 
 .cta__arrow {
@@ -202,7 +291,8 @@
   stroke-width: 1.75;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transition: transform var(--dur-ui) var(--ease-out);
+  /* A hint of spring as it leans forward. */
+  transition: transform 460ms cubic-bezier(0.34, 1.6, 0.64, 1);
 }
 
 .world[data-state='active'] .cta__arrow,
@@ -392,17 +482,24 @@
   background:
     radial-gradient(ellipse 62% 78% at 50% 50%, transparent 40%, rgb(0 0 0 / 0.6) 100%),
     linear-gradient(to bottom, rgb(0 0 0 / 0.35), transparent 18%, transparent 80%, rgb(0 0 0 / 0.45));
+  transition: opacity var(--t-split);
+}
+
+/* The active world opens up slightly: its edges fall off a little less. */
+.world[data-state='active'] .backdrop__vignette,
+.world[data-state='launching'] .backdrop__vignette {
+  opacity: 0.8;
 }
 
 .backdrop__scrim {
   inset: 0;
   background: var(--ctrl-ink);
   opacity: 0;
-  transition: opacity var(--dur-shift) var(--ease-out);
+  transition: opacity var(--t-split);
 }
 
 .world[data-state='receded'] .backdrop__scrim {
-  opacity: 0.34;
+  opacity: 0.2;
 }
 
 /* ───────────────────────── Avaria backdrop ───────────────────────── */
@@ -422,7 +519,7 @@
     radial-gradient(30% 30% at 96% 96%, rgb(60 24 120 / 0.28), transparent 70%);
   opacity: 0.85;
   animation: breathe 13s ease-in-out infinite alternate;
-  transition: opacity var(--dur-shift) var(--ease-out);
+  transition: opacity var(--t-split);
 }
 
 /* Fine dotted technical grid. */
@@ -434,7 +531,7 @@
   -webkit-mask-image: radial-gradient(60% 70% at 74% 50%, #000 20%, transparent 85%);
   mask-image: radial-gradient(60% 70% at 74% 50%, #000 20%, transparent 85%);
   opacity: 0.55;
-  transition: opacity var(--dur-shift) var(--ease-out);
+  transition: opacity var(--t-split);
 }
 
 .av-star {
@@ -517,7 +614,7 @@
     radial-gradient(30% 30% at 4% 100%, rgb(40 60 140 / 0.14), transparent 70%);
   opacity: 0.85;
   animation: breathe 12s ease-in-out infinite alternate;
-  transition: opacity var(--dur-shift) var(--ease-out);
+  transition: opacity var(--t-split);
 }
 
 @keyframes breathe {
@@ -592,7 +689,7 @@
   bottom: calc(6vh - 90vmin);
   overflow: visible;
   opacity: 0.4;
-  transition: opacity var(--dur-shift) var(--ease-out);
+  transition: opacity var(--t-split);
 }
 
 .mc-orbit {
@@ -721,6 +818,65 @@
   }
 }
 
+/* ───────────────────────── Micro-parallax ───────────────────────── */
+
+/*
+ * Desktop pointers only (data-parallax, set by Gateway): each layer drifts a few pixels against
+ * the pointer at its own depth, so each world reads as layered space. Content never moves.
+ * `translate` composes with the layers' own transform animations instead of replacing them.
+ */
+.av-grid,
+.mc-grid,
+.mc-stars__far {
+  --depth: 3;
+}
+
+.av-trace,
+.mc-dish {
+  --depth: 5;
+}
+
+.av-atmosphere,
+.mc-glow,
+.mc-stars__near {
+  --depth: 7;
+}
+
+.av-star {
+  --depth: 9;
+}
+
+.av-corner-rings,
+.mc-orbits {
+  --depth: 11;
+}
+
+.gateway[data-parallax]
+  :is(
+    .av-atmosphere,
+    .av-grid,
+    .av-star,
+    .av-corner-rings,
+    .av-trace,
+    .mc-glow,
+    .mc-grid,
+    .mc-stars__far,
+    .mc-stars__near,
+    .mc-orbits,
+    .mc-dish
+  ) {
+  translate: calc(var(--px) * var(--depth) * -1px) calc(var(--py) * var(--depth) * -0.6px);
+}
+
+.gateway[data-parallax] :is(.av-atmosphere, .av-grid, .av-corner-rings, .mc-glow, .mc-grid, .mc-orbits) {
+  will-change: translate;
+}
+
+/* Glows reach the viewport edge; overscan so a drifted edge never shows. */
+.gateway[data-parallax] :is(.av-atmosphere, .mc-glow) {
+  inset: -16px;
+}
+
 /* ───────────────────────── Emblem halos ───────────────────────── */
 
 .world__title {
@@ -732,6 +888,38 @@
   position: absolute;
   z-index: -1;
   pointer-events: none;
+}
+
+/* Presence: a wider aura gathers behind the mark while its world is active. */
+.halo--avaria::before,
+.halo--machlava::after {
+  content: '';
+  position: absolute;
+  inset: 2%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(var(--aura-rgb) / 0.2), transparent);
+  opacity: 0;
+  scale: 0.88;
+  transition:
+    opacity var(--t-split),
+    scale var(--t-split);
+}
+
+.halo--avaria::before {
+  --aura-rgb: 150 80 250;
+}
+
+.halo--machlava::after {
+  --aura-rgb: 50 125 255;
+}
+
+.world[data-state='active'] .halo--avaria::before,
+.world[data-state='launching'] .halo--avaria::before,
+.world[data-state='active'] .halo--machlava::after,
+.world[data-state='launching'] .halo--machlava::after {
+  opacity: 1;
+  scale: 1;
 }
 
 /* Avaria: concentric targeting rings and a horizon line through the mark. */
@@ -861,6 +1049,8 @@
 
 .gateway[data-launching] .seam {
   opacity: 0;
+  /* Let the confirmation flash land before the seam gives way to the chosen world. */
+  transition-delay: 150ms;
 }
 
 .seam__beam {
@@ -897,17 +1087,30 @@
     rgb(var(--av-magenta-rgb) / 0)
   );
   filter: blur(2.5px);
+  transition: transform var(--t-split);
+}
+
+/* The glow leans a hair toward the active world (Avaria is on the right). */
+.gateway[data-active='avaria'] .seam__glow {
+  transform: translateX(1.5px);
+}
+
+.gateway[data-active='machlava'] .seam__glow {
+  transform: translateX(-1.5px);
 }
 
 .seam__bloom {
   width: clamp(120px, 20vw, 360px);
   mix-blend-mode: screen;
-  transition: opacity var(--dur-shift) var(--ease-out);
+  transition:
+    opacity var(--t-split),
+    transform var(--t-split);
 }
 
 .seam__bloom--avaria {
   background: linear-gradient(to right, rgb(var(--av-magenta-rgb) / 0.22), rgb(var(--av-violet-rgb) / 0.07) 34%, transparent);
   opacity: 0.8;
+  transform-origin: left;
 }
 
 .seam__bloom--machlava {
@@ -915,16 +1118,41 @@
   right: 0;
   background: linear-gradient(to left, rgb(var(--mc-blue-rgb) / 0.2), rgb(var(--mc-blue-rgb) / 0.04) 34%, transparent);
   opacity: 0.8;
+  transform-origin: right;
 }
 
 .gateway[data-active='avaria'] .seam__bloom--avaria,
 .gateway[data-active='machlava'] .seam__bloom--machlava {
   opacity: 1;
+  transform: scaleX(1.15);
 }
 
 .gateway[data-active='avaria'] .seam__bloom--machlava,
 .gateway[data-active='machlava'] .seam__bloom--avaria {
   opacity: 0.4;
+  transform: scaleX(0.85);
+}
+
+/* Click: the seam flashes once toward the chosen world. */
+.gateway[data-launching='avaria'] .seam__bloom--avaria,
+.gateway[data-launching='machlava'] .seam__bloom--machlava {
+  animation: seam-flash 380ms var(--ease-out);
+}
+
+@keyframes seam-flash {
+  30% {
+    opacity: 1;
+    transform: scaleX(1.9);
+  }
+}
+
+@keyframes seam-breathe {
+  from {
+    opacity: 0.72;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .seam__ticks {
@@ -976,6 +1204,85 @@
   }
 }
 
+/*
+ * Whenever a world takes the lead, one faint pulse runs out along the beam from the node.
+ * Each side has its own keyframes so switching sides restarts it.
+ */
+.seam__surge {
+  top: 50%;
+  bottom: auto;
+  width: 14px;
+  height: 84vh;
+  translate: -50% -50%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgb(var(--surge-rgb, 255 255 255) / 0.95) 5%,
+    transparent 18%,
+    transparent 82%,
+    rgb(var(--surge-rgb, 255 255 255) / 0.95) 95%,
+    transparent
+  );
+  /* Soft sideways falloff: it reads as light travelling along the beam, not a second line. */
+  -webkit-mask-image: linear-gradient(to right, transparent, rgb(0 0 0 / 0.4) 28%, #000 50%, rgb(0 0 0 / 0.4) 72%, transparent);
+  mask-image: linear-gradient(to right, transparent, rgb(0 0 0 / 0.4) 28%, #000 50%, rgb(0 0 0 / 0.4) 72%, transparent);
+  opacity: 0;
+}
+
+.gateway[data-active='avaria'] .seam__surge {
+  --surge-rgb: 214 180 255;
+  animation: surge-avaria 1s var(--ease-out);
+}
+
+.gateway[data-active='machlava'] .seam__surge {
+  --surge-rgb: 172 206 255;
+  animation: surge-machlava 1s var(--ease-out);
+}
+
+/* Click: a brighter, quicker run of the same pulse. */
+.gateway[data-launching] .seam__surge {
+  animation: surge-launch 420ms var(--ease-out);
+}
+
+@keyframes surge-avaria {
+  from {
+    transform: scaleY(0.08);
+    opacity: 0.85;
+  }
+  40% {
+    opacity: 0.6;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 0;
+  }
+}
+
+@keyframes surge-machlava {
+  from {
+    transform: scaleY(0.08);
+    opacity: 0.85;
+  }
+  40% {
+    opacity: 0.6;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 0;
+  }
+}
+
+@keyframes surge-launch {
+  from {
+    transform: scaleY(0.08);
+    opacity: 1;
+  }
+  to {
+    transform: scaleY(1.1);
+    opacity: 0;
+  }
+}
+
 /* Centre node: where the two worlds touch. Its arms lean toward the active world. */
 .seam__node {
   position: absolute;
@@ -1001,6 +1308,52 @@
     0 0 0 4px rgb(3 3 6 / 0.6);
 }
 
+/* Crossing from one world to the other: a small ripple as the split passes through the centre. */
+.seam__node::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  translate: -50% -50%;
+  rotate: 45deg;
+  border: 1px solid rgb(var(--ripple-rgb, 255 255 255) / 0.9);
+  opacity: 0;
+}
+
+.gateway[data-crossing='avaria'] .seam__node::after {
+  --ripple-rgb: 206 170 255;
+  animation: node-ripple-avaria 640ms var(--ease-out) 200ms both;
+}
+
+.gateway[data-crossing='machlava'] .seam__node::after {
+  --ripple-rgb: 160 196 255;
+  animation: node-ripple-machlava 640ms var(--ease-out) 200ms both;
+}
+
+@keyframes node-ripple-avaria {
+  from {
+    scale: 1;
+    opacity: 0.8;
+  }
+  to {
+    scale: 4;
+    opacity: 0;
+  }
+}
+
+@keyframes node-ripple-machlava {
+  from {
+    scale: 1;
+    opacity: 0.8;
+  }
+  to {
+    scale: 4;
+    opacity: 0;
+  }
+}
+
 .seam__arm {
   position: absolute;
   top: 0;
@@ -1009,8 +1362,8 @@
   translate: 0 -50%;
   opacity: 0.75;
   transition:
-    width var(--dur-shift) var(--ease-out),
-    opacity var(--dur-shift) var(--ease-out);
+    width var(--t-split),
+    opacity var(--t-split);
 }
 
 .seam__arm--avaria {
@@ -1094,6 +1447,73 @@
     0 0 8px rgb(255 255 255 / 0.95),
     -4px 0 18px rgb(var(--mc-blue-rgb) / 0.85),
     4px 0 18px rgb(var(--av-magenta-rgb) / 0.7);
+  transition: box-shadow var(--t-split);
+}
+
+.gateway[data-active='avaria'] .brand__gate::before {
+  box-shadow:
+    0 0 8px rgb(255 255 255 / 0.95),
+    -4px 0 14px rgb(var(--mc-blue-rgb) / 0.55),
+    5px 0 22px rgb(var(--av-magenta-rgb) / 0.95);
+}
+
+.gateway[data-active='machlava'] .brand__gate::before {
+  box-shadow:
+    0 0 8px rgb(255 255 255 / 0.95),
+    -5px 0 22px rgb(var(--mc-blue-rgb) / 1),
+    4px 0 14px rgb(var(--av-magenta-rgb) / 0.45);
+}
+
+/* A small ripple of light around the gate, just after the seam's pulse sets off. */
+.brand__gate::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3em;
+  height: 3em;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(var(--flare-rgb, 255 255 255) / 0.34), transparent);
+  opacity: 0;
+}
+
+.gateway[data-active='avaria'] .brand__gate::after {
+  --flare-rgb: 196 130 255;
+  animation: gate-flare-avaria 900ms var(--ease-out) 220ms both;
+}
+
+.gateway[data-active='machlava'] .brand__gate::after {
+  --flare-rgb: 110 160 255;
+  animation: gate-flare-machlava 900ms var(--ease-out) 220ms both;
+}
+
+@keyframes gate-flare-avaria {
+  from {
+    scale: 0.4;
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    scale: 1.25;
+    opacity: 0;
+  }
+}
+
+@keyframes gate-flare-machlava {
+  from {
+    scale: 0.4;
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    scale: 1.25;
+    opacity: 0;
+  }
 }
 
 .brand__tagline {
@@ -1155,6 +1575,13 @@
   .seam__ticks {
     transform-origin: top;
     animation: beam-in 1.1s var(--ease-out) backwards;
+  }
+
+  /* Once drawn, the beam's glow breathes — slowly, barely. */
+  .seam__glow {
+    animation:
+      beam-in 1.1s var(--ease-out) backwards,
+      seam-breathe 5.6s ease-in-out 1.1s infinite alternate;
   }
 
   .seam__bloom {
@@ -1242,6 +1669,15 @@
 
   .gateway[data-launching] .world[data-state='dormant'] {
     opacity: 0;
+  }
+
+  /* The click pulse starts from the horizontal seam. */
+  .world--avaria {
+    --seam-at: 50% 100%;
+  }
+
+  .world--machlava {
+    --seam-at: 50% 0%;
   }
 
   .world__content {
@@ -1438,6 +1874,15 @@
     animation-name: beam-in-x;
   }
 
+  .seam__glow {
+    animation-name: beam-in-x, seam-breathe;
+  }
+
+  /* The pulse follows hover on the vertical beam; there is no hover here. */
+  .seam__surge {
+    display: none;
+  }
+
   .seam__node {
     display: none;
   }
@@ -1511,6 +1956,27 @@
   }
 }
 
+/* ───────────────────────── Touch press feedback ───────────────────────── */
+
+/* No hover on touch: pressing a world lights it a little, quickly, and lets go gently. */
+@media (hover: none) {
+  .world:has(.cta:active) .backdrop__vignette {
+    opacity: 0.8;
+    transition-duration: 160ms;
+  }
+
+  .world:has(.cta:active) .world__title {
+    transform: scale(1.02);
+    transition-duration: 200ms;
+  }
+
+  .gateway:has(.world--avaria .cta:active) .seam__bloom--avaria,
+  .gateway:has(.world--machlava .cta:active) .seam__bloom--machlava {
+    opacity: 1;
+    transition-duration: 160ms;
+  }
+}
+
 /* ───────────────────────── Short landscape screens ───────────────────────── */
 
 @media (min-width: 761px) and (max-height: 560px) {
@@ -1556,19 +2022,39 @@
   }
 
   .seam__arm,
+  .seam__bloom,
+  .seam__glow,
+  .brand__gate::before,
   .world,
   .world__title,
   .cta__frame,
   .cta__arrow,
-  .cta--avaria .cta__corners {
+  .cta--avaria .cta__corners,
+  .halo--avaria::before,
+  .halo--machlava::after {
     transition-property: opacity, background-color, border-color, box-shadow, color;
     transition-duration: 180ms;
   }
 
   .world[data-state] .world__title,
+  .world:has(.cta:active) .world__title,
   .world[data-state] .cta__frame,
-  .world[data-state] .cta__arrow {
+  .world[data-state] .cta__arrow,
+  .gateway[data-active] .seam__glow,
+  .gateway[data-active] .seam__bloom {
     transform: none;
+  }
+
+  .cta:active .cta__frame,
+  .world[data-state] .halo--avaria::before,
+  .world[data-state] .halo--machlava::after {
+    scale: none;
+  }
+
+  /* Belt and braces: Gateway already switches the parallax off. */
+  .gateway[data-parallax] :is(.av-atmosphere, .av-grid, .av-star, .av-corner-rings, .av-trace),
+  .gateway[data-parallax] :is(.mc-glow, .mc-grid, .mc-stars__far, .mc-stars__near, .mc-orbits, .mc-dish) {
+    translate: none;
   }
 }
 

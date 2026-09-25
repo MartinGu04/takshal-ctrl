@@ -75,13 +75,15 @@ src/
     destination.ts   URL validation
     systems.ts       names, copy, env → destinations
   features/gateway/  the split-screen gateway
-    Gateway.tsx      state: hover/focus emphasis, hand-off
+    Gateway.tsx      state: hover/focus emphasis, crossing, parallax switch, hand-off
     World.tsx        one system's half: content + CTA
     Seam.tsx         illuminated divider + TAKSHAL CTRL wordmark
     backdrops/       decorative art per world (aria-hidden)
+    useCrossing.ts   detects emphasis passing straight from one world to the other
+    useParallax.ts   pointer → --px/--py for the backdrop micro-parallax
     useLaunch.ts     hand-off transition → same-tab navigation
     gateway.css      layout, both visual identities, motion
-  lib/               small shared hooks/utilities (incl. retiring the old service worker)
+  lib/               small shared hooks/utilities (media queries, retiring the old service worker)
   styles/global.css  tokens, fonts, reset
   App.tsx            app shell
 ```
@@ -92,11 +94,27 @@ src/
   order) is on the right and המחלבה on the left. Below 760px the worlds stack vertically and the
   seam turns horizontal, carrying the wordmark.
 - **The seam** is the portal's identity: a light beam that splits the wordmark
-  (`TAKSHAL ┃ CTRL`), with a centre node whose arms lean toward the active world.
-- **Interaction.** Hovering or focusing a world makes it dominant (~58/42), brightens its layers
-  and lifts its CTA; the other recedes. The whole half is the click/tap target. On click the
-  chosen world fills the screen for ~0.5s, then navigates. Modified clicks (⌘/Ctrl/Shift, middle
-  click) are left to the browser.
+  (`TAKSHAL ┃ CTRL`), with a centre node whose arms lean toward the active world. At rest its
+  glow breathes very slowly. When a world takes the lead the glow and blooms lean toward it, one
+  faint pulse runs out along the beam from the node, and the gate in the wordmark flares softly.
+- **Interaction.** Hovering or focusing a world leans the split to 57/43. The active world gains
+  a little presence (an aura behind its mark, a lighter vignette, a livelier CTA); the other
+  calms slightly but stays fully readable. Panels, seam and glows share one timing (`--t-split`
+  in `gateway.css`): quick to answer, gentle on the way back to 50/50, and a single glide through
+  the centre when emphasis passes straight from one world to the other (`data-crossing`), marked
+  by a small ripple at the node. Keyboard focus gets exactly the same treatment; tabbing between
+  the worlds is a crossing too. The whole half is the click/tap target.
+- **Micro-parallax** (desktop pointers only). Backdrop layers drift a few pixels (≤ 11px) against
+  the pointer, each at its own depth; logos, text and CTAs never move. `useParallax` eases the
+  pointer into two custom properties per frame — no layout reads — and stops when it settles.
+  Off on touch, in the stacked layout and with reduced motion.
+- **Click.** A pulse of light runs from the seam into the chosen world, the seam flashes once
+  toward it and the chosen world takes the screen. Navigation starts 180ms after the click and
+  the transition keeps playing while the destination loads (the page stays on screen until it
+  responds), so it overlaps the network wait instead of adding to it. Modified clicks
+  (⌘/Ctrl/Shift, middle click) are left to the browser.
+- **Touch.** No hover emulation. Pressing a world lights it briefly: the CTA gives slightly, its
+  vignette opens and its side of the seam brightens.
 - **Brand-true worlds**, referenced from the real entry screens. Avaria: black-purple base,
   deep violet atmosphere, fine dotted grid, concentric targeting rings and a horizon line behind
   the mark, one heartbeat line. המחלבה: almost-black navy, an extremely faint grid, sparse blue
@@ -108,7 +126,8 @@ src/
 - **No fake telemetry, no routing details.** The only interface copy is each system's name,
   Avaria's tagline and the two entry actions. The hand-off is announced to assistive
   technology ("מתחבר ל־…").
-- **Reduced motion.** All animation stops, the split no longer moves, links navigate directly.
+- **Reduced motion.** All animation stops: no split movement, parallax, pulses or breathing, and
+  links navigate directly. Emphasis still shows through light alone (short opacity/colour fades).
   The static composition is designed to stand on its own.
 - **Backdrops are sized to the viewport, not the half,** so the seam slides over them like a
   window instead of stretching them.

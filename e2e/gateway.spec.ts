@@ -17,6 +17,22 @@ const avaria = (page: Page) => page.getByRole('link', { name: 'כניסה ל־Av
 const machlava = (page: Page) => page.getByRole('link', { name: 'כניסה להמחלבה' })
 const region = (page: Page, name: string) => page.getByRole('region', { name })
 
+/** A world's share of the viewport width, 0…1. */
+const share = async (page: Page, name: string) =>
+  (await region(page, name).boundingBox())!.width / page.viewportSize()!.width
+
+/** Resolves once every transition and finite animation (intro, split) has finished; ambient loops aside. */
+const settled = (page: Page) =>
+  page.waitForFunction(() =>
+    document.getAnimations().every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity),
+  )
+
+/** Where things sit on screen, to prove they stay put. */
+const boxOf = async (page: Page, selector: string) => {
+  const { x, y, width, height } = (await page.locator(selector).boundingBox())!
+  return [x, y, width, height].map((n) => Math.round(n))
+}
+
 test.beforeEach(async ({ page }) => {
   await stubDestinations(page)
   await page.goto('/')
@@ -43,6 +59,10 @@ test('splits side by side on desktop and stacks on mobile', async ({ page, isMob
   const a = (await region(page, 'Avaria').boundingBox())!
   const m = (await region(page, 'המחלבה').boundingBox())!
   const viewport = page.viewportSize()!
+
+  // The pointer parallax exists only for the side-by-side layout with a real pointer.
+  if (isMobile) await expect(page.locator('main')).not.toHaveAttribute('data-parallax')
+  else await expect(page.locator('main')).toHaveAttribute('data-parallax')
 
   if (isMobile) {
     expect(a.y + a.height).toBeLessThanOrEqual(m.y + 1)
@@ -87,14 +107,64 @@ test('supplied logos render crisp and correctly proportioned, with neither side 
   expect(ratio).toBeLessThan(2.4)
 })
 
-test('hovering a world makes it dominant (desktop)', async ({ page, isMobile }) => {
+test('hovering a world leans the split to about 57/43, and leaving settles it back (desktop)', async ({
+  page,
+  isMobile,
+}) => {
   test.skip(isMobile, 'hover only applies to fine pointers')
-  const before = (await region(page, 'Avaria').boundingBox())!.width
+  const main = page.locator('main')
+
   await region(page, 'Avaria').hover()
-  await expect(page.locator('main')).toHaveAttribute('data-active', 'avaria')
-  await expect.poll(async () => (await region(page, 'Avaria').boundingBox())!.width).toBeGreaterThan(before + 40)
+  await expect(main).toHaveAttribute('data-active', 'avaria')
+  await expect.poll(() => share(page, 'Avaria')).toBeCloseTo(0.57, 2)
+  expect(await share(page, 'המחלבה')).toBeCloseTo(0.43, 2)
+
   await page.mouse.move(-1, -1)
-  await expect(page.locator('main')).toHaveAttribute('data-active', 'none')
+  await expect(main).toHaveAttribute('data-active', 'none')
+  await expect.poll(() => share(page, 'Avaria')).toBeCloseTo(0.5, 2)
+})
+
+test('moving straight across hands the split to the other world, seam on the boundary (desktop)', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'hover only applies to fine pointers')
+  const main = page.locator('main')
+  const viewport = page.viewportSize()!
+
+  await page.mouse.move(viewport.width * 0.8, viewport.height / 2)
+  await expect.poll(() => share(page, 'Avaria')).toBeCloseTo(0.57, 2)
+
+  await page.mouse.move(viewport.width * 0.2, viewport.height / 2, { steps: 6 })
+  await expect(main).toHaveAttribute('data-active', 'machlava')
+  await expect(main).toHaveAttribute('data-crossing', 'machlava')
+  await expect.poll(() => share(page, 'המחלבה')).toBeCloseTo(0.57, 2)
+
+  // The seam sits exactly where the worlds meet, and nothing widens the page.
+  const seam = (await page.locator('.seam').boundingBox())!
+  const left = (await region(page, 'המחלבה').boundingBox())!
+  expect(Math.abs(seam.x - (left.x + left.width))).toBeLessThanOrEqual(1)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0)
+})
+
+test('micro-parallax drifts the backdrop but never the content (desktop)', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'no pointer parallax on touch')
+  const viewport = page.viewportSize()!
+  const rings = page.locator('.av-corner-rings')
+  const drift = () => rings.evaluate((el) => getComputedStyle(el).translate)
+
+  // Two resting points inside Avaria, so the split itself stays put between them.
+  await page.mouse.move(viewport.width * 0.6, viewport.height * 0.2)
+  await expect(page.locator('main')).toHaveAttribute('data-active', 'avaria')
+  await settled(page)
+  const content = ['.cta--avaria .cta__frame', '.world--avaria .world__logo', '.cta--machlava .cta__frame']
+  const before = await Promise.all(content.map((selector) => boxOf(page, selector)))
+  const driftBefore = await drift()
+
+  await page.mouse.move(viewport.width * 0.98, viewport.height * 0.95, { steps: 5 })
+  await expect.poll(drift).not.toBe(driftBefore)
+  await settled(page)
+  expect(await Promise.all(content.map((selector) => boxOf(page, selector)))).toEqual(before)
 })
 
 test('is fully keyboard operable', async ({ page, isMobile }) => {
@@ -103,6 +173,8 @@ test('is fully keyboard operable', async ({ page, isMobile }) => {
   await page.keyboard.press('Tab')
   await expect(avaria(page)).toBeFocused()
   await expect(region(page, 'Avaria')).toHaveAttribute('data-state', 'active')
+  // Focus gets the same treatment as hover, split included.
+  await expect.poll(() => share(page, 'Avaria')).toBeCloseTo(0.57, 2)
 
   const ring = await avaria(page)
     .locator('.cta__frame')
@@ -112,6 +184,9 @@ test('is fully keyboard operable', async ({ page, isMobile }) => {
   await page.keyboard.press('Tab')
   await expect(machlava(page)).toBeFocused()
   await expect(region(page, 'המחלבה')).toHaveAttribute('data-state', 'active')
+  // Tabbing across is one hand-over, not a drop to idle and a fresh start.
+  await expect(page.locator('main')).toHaveAttribute('data-crossing', 'machlava')
+  await expect.poll(() => share(page, 'המחלבה')).toBeCloseTo(0.57, 2)
 
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(E2E_MACHLAVA_URL)
@@ -163,12 +238,16 @@ test.describe('reduced motion', () => {
       () => document.getAnimations().filter((a) => a instanceof CSSAnimation && a.playState === 'running').length,
     )
     expect(running).toBe(0)
+    await expect(page.locator('main')).not.toHaveAttribute('data-parallax')
 
     if (!isMobile) {
       const before = (await region(page, 'Avaria').boundingBox())!.width
       await region(page, 'Avaria').hover()
       await expect(region(page, 'Avaria')).toHaveAttribute('data-state', 'active')
       expect((await region(page, 'Avaria').boundingBox())!.width).toBeCloseTo(before, 0)
+      // No surge, ripple or flare either: nothing new starts on hover.
+      const started = await page.evaluate(() => document.getAnimations().filter((a) => a instanceof CSSAnimation).length)
+      expect(started).toBe(0)
     }
 
     await avaria(page).click()

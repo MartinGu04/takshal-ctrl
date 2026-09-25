@@ -1,4 +1,4 @@
-import type { ComponentType, FocusEvent, MouseEvent, PointerEvent } from 'react'
+import type { ComponentType, MouseEvent, PointerEvent } from 'react'
 import type { SystemDefinition, SystemId } from '../../config/systems'
 import { hintOrigin } from '../../lib/resourceHints'
 import { AvariaBackdrop } from './backdrops/AvariaBackdrop'
@@ -13,7 +13,8 @@ interface WorldProps {
   /** When false (reduced motion), links behave as plain same-tab links with no hand-off transition. */
   readonly interceptNavigation: boolean
   readonly onHover: (id: SystemId, on: boolean) => void
-  readonly onFocus: (id: SystemId, on: boolean) => void
+  /** Focus entered this world. Gateway releases it when focus leaves the gateway altogether. */
+  readonly onFocus: (id: SystemId) => void
   readonly onLaunch: (id: SystemId, href: string) => void
 }
 
@@ -27,9 +28,13 @@ const HALOS = {
   machlava: MachlavaHalo,
 } satisfies Record<SystemId, ComponentType>
 
-/** Hover emphasis is for real pointers only; touch gets feedback from the tap itself. */
+/**
+ * Hover emphasis is for real pointers only; touch gets feedback from the tap itself.
+ * `any-hover`, not `hover`: a touchscreen laptop can report touch as its primary input
+ * while the user is on a mouse or trackpad.
+ */
 function canHover(event: PointerEvent) {
-  return event.pointerType !== 'touch' && window.matchMedia('(hover: hover)').matches
+  return event.pointerType !== 'touch' && window.matchMedia('(any-hover: hover)').matches
 }
 
 function isPlainPrimaryClick(event: MouseEvent) {
@@ -58,12 +63,8 @@ export function World({ system, state, interceptNavigation, onHover, onFocus, on
   }
 
   const handleFocus = () => {
-    onFocus(id, true)
+    onFocus(id)
     warmUp()
-  }
-
-  const handleBlur = (event: FocusEvent<HTMLElement>) => {
-    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) onFocus(id, false)
   }
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -82,7 +83,6 @@ export function World({ system, state, interceptNavigation, onHover, onFocus, on
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
       onFocus={handleFocus}
-      onBlur={handleBlur}
     >
       <Backdrop />
 
