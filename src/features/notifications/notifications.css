@@ -1,0 +1,321 @@
+/*
+ * Notification control: a small, neutral mark in the top-left corner (physical left, so it
+ * never sits on the TAKSHAL CTRL wordmark), plus a compact popover panel.
+ */
+
+.ntf {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  z-index: 30;
+  font-family: var(--font-hebrew);
+  color: var(--ctrl-text);
+}
+
+.ntf__trigger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 50%;
+  background: rgb(8 9 14 / 0.55);
+  color: rgb(236 238 246 / 0.78);
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--dur-ui) var(--ease-out),
+    background-color var(--dur-ui) var(--ease-out),
+    color var(--dur-ui) var(--ease-out);
+}
+
+.ntf__trigger:hover,
+.ntf__trigger[aria-expanded='true'] {
+  border-color: rgb(255 255 255 / 0.26);
+  background: rgb(14 15 22 / 0.75);
+  color: #fff;
+}
+
+.ntf__trigger:focus-visible,
+.ntf__panel button:focus-visible,
+.ntf__panel a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.ntf__trigger svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ntf__dot {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 0 2px rgb(8 9 14 / 0.9), 0 0 8px rgb(74 222 128 / 0.7);
+  opacity: 0;
+  transition: opacity var(--dur-ui) var(--ease-out);
+}
+
+.ntf__trigger[data-enabled] .ntf__dot {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ntf__trigger {
+    animation: fade-in 0.9s var(--ease-out) 0.5s backwards;
+  }
+
+  .ntf__panel {
+    animation: ntf-in 0.22s var(--ease-out);
+  }
+}
+
+@keyframes ntf-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.ntf__panel {
+  position: absolute;
+  top: 54px;
+  left: 0;
+  right: auto;
+  margin: 0;
+  color: inherit;
+  width: min(340px, calc(100vw - 32px));
+  padding: 18px 18px 16px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 16px;
+  background: rgb(10 11 17 / 0.94);
+  box-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.85);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  text-align: start;
+  outline: none;
+}
+
+.ntf__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ntf__title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.ntf__close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: -6px -6px -6px -8px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgb(236 238 246 / 0.6);
+  cursor: pointer;
+}
+
+.ntf__close:hover {
+  background: rgb(255 255 255 / 0.06);
+  color: #fff;
+}
+
+.ntf__close svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.ntf__sources {
+  margin-top: 6px;
+  font: 500 0.75rem/1 var(--font-hebrew);
+  letter-spacing: 0.04em;
+  color: rgb(236 238 246 / 0.42);
+  text-align: right;
+}
+
+.ntf__status {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  margin-top: 16px;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: rgb(236 238 246 / 0.86);
+}
+
+.ntf__status-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  translate: 0 -1px;
+  background: rgb(236 238 246 / 0.4);
+}
+
+.ntf__status[data-tone='ok'] .ntf__status-dot {
+  background: #4ade80;
+  box-shadow: 0 0 8px rgb(74 222 128 / 0.6);
+}
+
+.ntf__status[data-tone='warn'] .ntf__status-dot {
+  background: #f5b04a;
+}
+
+.ntf__status[data-tone='off'] .ntf__status-dot {
+  background: rgb(236 238 246 / 0.2);
+}
+
+.ntf__steps {
+  margin: 12px 0 0;
+  padding-inline-start: 1.2em;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: rgb(236 238 246 / 0.72);
+}
+
+.ntf__steps strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.ntf__actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.ntf__actions:empty {
+  display: none;
+}
+
+.ntf__primary,
+.ntf__secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font: 600 0.9375rem/1 var(--font-hebrew);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-ui) var(--ease-out),
+    border-color var(--dur-ui) var(--ease-out),
+    opacity var(--dur-ui) var(--ease-out);
+}
+
+.ntf__primary {
+  border: 1px solid transparent;
+  background: #f4f4f7;
+  color: #0a0a10;
+}
+
+.ntf__primary:hover:not(:disabled) {
+  background: #fff;
+}
+
+.ntf__secondary {
+  border: 1px solid rgb(255 255 255 / 0.16);
+  background: transparent;
+  color: rgb(236 238 246 / 0.9);
+}
+
+.ntf__secondary:hover:not(:disabled) {
+  border-color: rgb(255 255 255 / 0.32);
+  background: rgb(255 255 255 / 0.04);
+}
+
+.ntf__primary:disabled,
+.ntf__secondary:disabled,
+.ntf__link:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.ntf__google {
+  width: 18px;
+  height: 18px;
+}
+
+.ntf__feedback {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.8125rem;
+  color: rgb(236 238 246 / 0.72);
+}
+
+.ntf__feedback[data-kind='test-sent'] {
+  color: #86efac;
+}
+
+.ntf__feedback[data-kind='test-rate-limited'],
+.ntf__feedback[data-kind='test-failed'] {
+  color: #fcd38d;
+}
+
+.ntf__account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  font-size: 0.8125rem;
+  color: rgb(236 238 246 / 0.55);
+}
+
+.ntf__email {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ntf__link {
+  flex: none;
+  min-height: 32px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: rgb(236 238 246 / 0.8);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+@media (forced-colors: active) {
+  .ntf__trigger,
+  .ntf__primary,
+  .ntf__secondary {
+    border: 1px solid ButtonText;
+  }
+}
