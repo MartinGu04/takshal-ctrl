@@ -1,8 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 /**
- * Visual regression for the composition. Runs with reduced motion so the frame is static,
- * and masks the destination hosts, which vary by environment.
+ * Visual regression for the composition. Runs with reduced motion so the frame is static.
  * Update baselines with: npx playwright test e2e/visual.spec.ts --update-snapshots
  */
 test.use({ contextOptions: { reducedMotion: 'reduce' } })
@@ -19,7 +18,6 @@ test('gateway composition', async ({ page }) => {
   await expect(page).toHaveScreenshot('gateway.png', {
     fullPage: true,
     animations: 'disabled',
-    mask: [page.locator('.world__route-host')],
     maxDiffPixelRatio: 0.01,
   })
 })

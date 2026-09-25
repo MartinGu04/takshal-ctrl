@@ -3,6 +3,7 @@ import type { SystemDefinition, SystemId } from '../../config/systems'
 import { hintOrigin } from '../../lib/resourceHints'
 import { AvariaBackdrop } from './backdrops/AvariaBackdrop'
 import { MachlavaBackdrop } from './backdrops/MachlavaBackdrop'
+import { AvariaHalo, MachlavaHalo } from './backdrops/Halos'
 
 export type WorldState = 'idle' | 'active' | 'receded' | 'launching' | 'dormant'
 
@@ -21,6 +22,11 @@ const BACKDROPS = {
   machlava: MachlavaBackdrop,
 } satisfies Record<SystemId, ComponentType>
 
+const HALOS = {
+  avaria: AvariaHalo,
+  machlava: MachlavaHalo,
+} satisfies Record<SystemId, ComponentType>
+
 /** Hover emphasis is for real pointers only; touch gets feedback from the tap itself. */
 function canHover(event: PointerEvent) {
   return event.pointerType !== 'touch' && window.matchMedia('(hover: hover)').matches
@@ -33,6 +39,7 @@ function isPlainPrimaryClick(event: MouseEvent) {
 export function World({ system, state, interceptNavigation, onHover, onFocus, onLaunch }: WorldProps) {
   const { id, destination } = system
   const Backdrop = BACKDROPS[id]
+  const Halo = HALOS[id]
   const titleId = `${id}-title`
 
   const warmUp = () => {
@@ -82,6 +89,7 @@ export function World({ system, state, interceptNavigation, onHover, onFocus, on
       <div className="world__content">
         <div className="world__identity">
           <h2 id={titleId} className="world__title">
+            <Halo />
             <img
               className="world__logo"
               src={system.logo.src}
@@ -118,16 +126,8 @@ export function World({ system, state, interceptNavigation, onHover, onFocus, on
           </p>
         )}
 
-        <p className="world__route" dir="ltr" aria-live="polite">
-          {destination.ok ? (
-            <>
-              <span className="world__route-label">{state === 'launching' ? 'CONNECTING' : 'ROUTE'}</span>
-              <span className="world__route-host">{destination.host}</span>
-            </>
-          ) : (
-            <span className="world__route-label">NO ROUTE</span>
-          )}
-        </p>
+        {/* The hand-off is visual; announce it for assistive technology too. */}
+        <output className="visually-hidden">{state === 'launching' ? `מתחבר ל־${system.name}…` : ''}</output>
       </div>
     </section>
   )

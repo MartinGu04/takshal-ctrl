@@ -2,8 +2,9 @@ import { memo, useMemo } from 'react'
 import { seededRandom } from '../../../lib/random'
 
 /**
- * המחלבה: deep navy space, SATCOM — orbits, satellites, stars and a dish, in the blue → violet
- * of the real המחלבה logo, which sits in front of this. Everything here is decorative.
+ * המחלבה, after the real המחלבה entry screen: almost-black navy, an extremely faint technical
+ * grid, sparse blue light and restrained SATCOM cues (a few stars, quiet orbits, a dish).
+ * Operational rather than a space wallpaper. Everything here is decorative.
  */
 
 interface Star {
@@ -30,9 +31,9 @@ function makeStars(seed: number, count: number, minR: number, maxR: number): Sta
 function Starfield() {
   const { far, near, twinkle } = useMemo(
     () => ({
-      far: makeStars(7, 150, 0.5, 1.1),
-      near: makeStars(19, 40, 1, 1.8),
-      twinkle: makeStars(42, 12, 1.4, 2.2),
+      far: makeStars(7, 46, 0.5, 1),
+      near: makeStars(19, 12, 0.9, 1.5),
+      twinkle: makeStars(42, 5, 1.2, 1.8),
     }),
     [],
   )
@@ -90,19 +91,12 @@ function Orbits() {
           <stop offset="1" stopColor="#9a7bff" stopOpacity="0.18" />
         </linearGradient>
       </defs>
-      <circle cx="500" cy="500" r="210" className="mc-orbit mc-orbit--dotted" />
       <circle cx="500" cy="500" r="310" className="mc-orbit mc-orbit--solid" stroke="url(#mc-orbit-fade)" />
-      <circle cx="500" cy="500" r="420" className="mc-orbit mc-orbit--dashed" />
-      <circle cx="500" cy="500" r="488" className="mc-orbit mc-orbit--dotted mc-orbit--faint" />
+      <circle cx="500" cy="500" r="420" className="mc-orbit mc-orbit--dotted" />
 
       <g className="mc-orbit-spin mc-orbit-spin--a">
-        <Satellite angle={18} radius={310} />
-        <Satellite angle={138} radius={310} />
-        <Satellite angle={258} radius={310} />
-      </g>
-      <g className="mc-orbit-spin mc-orbit-spin--b">
-        <Satellite angle={62} radius={420} />
-        <Satellite angle={242} radius={420} />
+        <Satellite angle={24} radius={310} />
+        <Satellite angle={204} radius={310} />
       </g>
     </svg>
   )
@@ -143,8 +137,8 @@ export const MachlavaBackdrop = memo(function MachlavaBackdrop() {
   return (
     <div className="backdrop backdrop--machlava" aria-hidden="true">
       <div className="mc-base" />
-      <div className="mc-nebula" />
-      <div className="mc-dots" />
+      <div className="mc-glow" />
+      <div className="mc-grid" />
       <Starfield />
       <Orbits />
       <Dish />

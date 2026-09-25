@@ -117,6 +117,17 @@
   transition: transform var(--dur-shift) var(--ease-out);
 }
 
+/* Avaria's short violet accent under the mark, as on its entry screen. */
+.world--avaria .world__tagline::before {
+  content: '';
+  display: block;
+  width: 44px;
+  height: 3px;
+  margin: 0 auto clamp(14px, 2vh, 20px);
+  border-radius: 3px;
+  background: linear-gradient(90deg, #6d3be0, #9b6bff);
+}
+
 .world[data-state='active'] .world__title {
   transform: scale(1.03);
 }
@@ -137,31 +148,6 @@
   font-weight: 400;
   line-height: 1.55;
   color: var(--world-muted);
-}
-
-.world__route {
-  display: inline-flex;
-  gap: 10px;
-  margin-top: 18px;
-  min-height: 1em;
-  font: 400 0.6875rem/1 var(--font-mono);
-  letter-spacing: 0.14em;
-  color: var(--world-muted);
-  opacity: 0.72;
-}
-
-.world__route-label {
-  color: var(--world-accent);
-}
-
-.world[data-state='launching'] .world__route-label {
-  animation: route-blink 0.7s steps(2, jump-none) infinite;
-}
-
-@keyframes route-blink {
-  to {
-    opacity: 0.25;
-  }
 }
 
 /* ───────────────────────── CTA (shared) ───────────────────────── */
@@ -303,14 +289,13 @@
 /* ───────────────────────── CTA — המחלבה ───────────────────────── */
 
 .cta--machlava .cta__frame {
-  color: #f2f6ff;
-  border: 1px solid transparent;
+  color: #f3f6ff;
+  border: 1px solid rgb(120 160 240 / 0.38);
   border-radius: 999px;
-  background:
-    linear-gradient(115deg, rgb(18 44 150 / 0.92), rgb(46 26 130 / 0.92)) padding-box,
-    linear-gradient(115deg, rgb(var(--mc-cyan-rgb) / 0.95), rgb(var(--mc-blue-rgb) / 0.95) 45%, rgb(var(--mc-violet-rgb) / 0.95))
-      border-box;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
+  background-color: rgb(255 255 255 / 0.045);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 .cta--machlava .cta__arrow {
@@ -324,7 +309,7 @@
   z-index: -1;
   border-radius: 999px;
   pointer-events: none;
-  background: radial-gradient(closest-side, rgb(var(--mc-blue-rgb) / 0.45), transparent);
+  background: radial-gradient(closest-side, rgb(var(--mc-blue-rgb) / 0.3), transparent);
   opacity: 0;
   transition: opacity var(--dur-ui) var(--ease-out);
 }
@@ -332,9 +317,11 @@
 .world--machlava[data-state='active'] .cta__frame,
 .world--machlava[data-state='launching'] .cta__frame {
   transform: translateY(-2px);
+  background-color: rgb(var(--mc-blue-rgb) / 0.16);
+  border-color: rgb(140 180 255 / 0.8);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.16),
-    0 16px 40px -14px rgb(var(--mc-blue-rgb) / 0.9);
+    0 16px 40px -16px rgb(var(--mc-blue-rgb) / 0.75);
 }
 
 .world--machlava[data-state='active'] .cta__corners,
@@ -361,12 +348,12 @@
 
 .world--avaria .world__logo {
   /* The mark is wide and light; the המחלבה lockup is tall and dense. Sizes balance their visual weight. */
-  width: min(33vw, 32rem);
+  width: min(34vw, 33rem);
 }
 
 .world--machlava .world__logo {
   width: auto;
-  max-height: min(37vh, 23vw);
+  max-height: min(31vh, 19.5vw);
 }
 
 /* ───────────────────────── Backdrops (shared) ───────────────────────── */
@@ -422,212 +409,94 @@
 
 .av-base {
   inset: 0;
-  background:
-    radial-gradient(58% 70% at 52% 48%, #140d2e 0%, transparent 72%),
-    linear-gradient(180deg, #090719 0%, #06050f 60%, #040309 100%);
+  background: linear-gradient(180deg, #0b0818 0%, #080614 55%, #06050f 100%);
 }
 
-/* Dotted technical grid with faint major lines. */
+/* Deep violet atmosphere: large, soft, slow. */
+.av-atmosphere {
+  inset: 0;
+  background:
+    radial-gradient(30% 34% at 90% 10%, rgb(88 28 170 / 0.42), transparent 72%),
+    radial-gradient(26% 30% at 60% 4%, rgb(70 30 140 / 0.3), transparent 70%),
+    radial-gradient(34% 40% at 76% 52%, rgb(90 40 170 / 0.16), transparent 72%),
+    radial-gradient(30% 30% at 96% 96%, rgb(60 24 120 / 0.28), transparent 70%);
+  opacity: 0.85;
+  animation: breathe 13s ease-in-out infinite alternate;
+  transition: opacity var(--dur-shift) var(--ease-out);
+}
+
+/* Fine dotted technical grid. */
 .av-grid {
   inset: 0;
-  background-image:
-    radial-gradient(circle, rgb(176 140 255 / 0.3) 1px, transparent 1.4px),
-    linear-gradient(rgb(var(--av-violet-rgb) / 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(var(--av-violet-rgb) / 0.07) 1px, transparent 1px);
-  background-size:
-    24px 24px,
-    144px 144px,
-    144px 144px;
-  background-position:
-    right 12px top 12px,
-    right -1px top -1px,
-    right -1px top -1px;
-  -webkit-mask-image: radial-gradient(54% 64% at 74% 52%, #000 12%, transparent 80%);
-  mask-image: radial-gradient(54% 64% at 74% 52%, #000 12%, transparent 80%);
-  opacity: 0.7;
-  transition: opacity var(--dur-shift) var(--ease-out);
-}
-
-.av-glow {
-  inset: 0;
-  background:
-    radial-gradient(34% 38% at 78% 106%, rgb(var(--av-violet-rgb) / 0.3), transparent 70%),
-    radial-gradient(22% 28% at 60% 14%, rgb(var(--av-magenta-rgb) / 0.09), transparent 70%),
-    radial-gradient(26% 34% at 75% 50%, rgb(var(--av-violet-rgb) / 0.1), transparent 70%);
-  opacity: 0.85;
-  transition: opacity var(--dur-shift) var(--ease-out);
-}
-
-/* Radar: rings, ticks and a slow sweep, anchored near the outer edge. */
-.av-radar {
-  right: calc(8% - 21vmin);
-  top: calc(20% - 21vmin);
-  width: 58vmin;
-  aspect-ratio: 1;
-  opacity: 0.7;
-  -webkit-mask-image: radial-gradient(closest-side, #000 55%, rgb(0 0 0 / 0.35) 100%);
-  mask-image: radial-gradient(closest-side, #000 55%, rgb(0 0 0 / 0.35) 100%);
-  transition: opacity var(--dur-shift) var(--ease-out);
-}
-
-.av-radar__rings {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  fill: none;
-}
-
-.av-radar__ring {
-  stroke: rgb(var(--av-violet-rgb) / 0.32);
-  stroke-width: 0.35;
-}
-
-.av-radar__ring--outer {
-  stroke: rgb(var(--av-violet-rgb) / 0.5);
-  stroke-width: 0.5;
-}
-
-.av-radar__ring--dotted {
-  stroke: rgb(176 140 255 / 0.5);
-  stroke-width: 0.7;
-  stroke-dasharray: 0.01 2.4;
-  stroke-linecap: round;
-}
-
-.av-radar__cross {
-  stroke: rgb(var(--av-violet-rgb) / 0.2);
-  stroke-width: 0.3;
-}
-
-.av-radar__ticks line {
-  stroke: rgb(176 140 255 / 0.45);
-  stroke-width: 0.35;
-}
-
-.av-radar__blip {
-  fill: rgb(var(--av-magenta-rgb) / 0.95);
-  animation: blip 5s ease-out infinite;
-}
-
-.av-radar__sweep {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    rgb(var(--av-violet-rgb) / 0.16),
-    rgb(var(--av-violet-rgb) / 0.05) 10%,
-    transparent 22%,
-    transparent 99.4%,
-    rgb(190 150 255 / 0.4)
-  );
-  animation: spin 5s linear infinite;
-}
-
-@keyframes blip {
-  0%,
-  8% {
-    opacity: 0;
-  }
-  12% {
-    opacity: 1;
-  }
-  60%,
-  100% {
-    opacity: 0;
-  }
-}
-
-.av-scan {
-  left: 46%;
-  right: 0;
-  top: 0;
-  height: 34vh;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgb(var(--av-violet-rgb) / 0.03) 60%,
-    rgb(var(--av-violet-rgb) / 0.1) 98%,
-    rgb(210 180 255 / 0.2) 100%
-  );
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 25%, #000 80%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 25%, #000 80%, transparent);
-  transform: translateY(-40vh);
+  background-image: radial-gradient(circle, rgb(190 170 255 / 0.2) 0.8px, transparent 1.2px);
+  background-size: 22px 22px;
+  background-position: right 11px top 11px;
+  -webkit-mask-image: radial-gradient(60% 70% at 74% 50%, #000 20%, transparent 85%);
+  mask-image: radial-gradient(60% 70% at 74% 50%, #000 20%, transparent 85%);
   opacity: 0.55;
-  animation: av-scan 11s linear infinite;
   transition: opacity var(--dur-shift) var(--ease-out);
 }
 
-@keyframes av-scan {
-  0% {
-    transform: translateY(-40vh);
-  }
-  64%,
-  100% {
-    transform: translateY(104vh);
-  }
+.av-star {
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgb(220 210 255 / 0.5);
 }
 
-.av-ruler {
-  right: clamp(16px, 2.2vw, 34px);
-  top: 30vh;
-  bottom: 14vh;
-  width: 13px;
-  border-right: 1px solid rgb(var(--av-violet-rgb) / 0.35);
-  background:
-    repeating-linear-gradient(to bottom, rgb(var(--av-violet-rgb) / 0.55) 0 1px, transparent 1px 12px) right / 6px
-      100% no-repeat,
-    repeating-linear-gradient(to bottom, rgb(176 140 255 / 0.8) 0 1px, transparent 1px 60px) right / 13px 100% no-repeat;
-  opacity: 0.5;
+.av-corner-rings {
+  right: -14vmin;
+  bottom: -22vmin;
+  width: 56vmin;
+  height: 56vmin;
+  fill: none;
+  stroke: rgb(var(--av-violet-rgb) / 0.2);
+  stroke-width: 0.5;
+  opacity: 0.9;
 }
 
 .av-trace {
   left: 46%;
   right: 0;
-  bottom: 3vh;
+  bottom: 4vh;
   width: 54%;
-  height: 12vh;
+  height: 11vh;
   overflow: visible;
   fill: none;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 22%, #000 88%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 22%, #000 88%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 18%, #000 92%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 18%, #000 92%, transparent);
 }
 
 .av-trace__base {
-  stroke: rgb(var(--av-violet-rgb) / 0.32);
+  stroke: rgb(150 130 200 / 0.26);
   stroke-width: 1.25;
   vector-effect: non-scaling-stroke;
 }
 
 .av-trace__pulse {
-  stroke: #c9a2ff;
-  stroke-width: 1.75;
+  stroke: #b58cff;
+  stroke-width: 1.5;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
-  stroke-dasharray: 0.07 0.93;
-  stroke-dashoffset: 0.07;
-  filter: drop-shadow(0 0 4px rgb(var(--av-magenta-rgb) / 0.9));
-  animation: av-trace 6.5s linear infinite;
+  stroke-dasharray: 0.06 0.94;
+  stroke-dashoffset: 0.06;
+  filter: drop-shadow(0 0 4px rgb(var(--av-violet-rgb) / 0.9));
+  animation: av-trace 8s linear infinite;
 }
 
 @keyframes av-trace {
   from {
-    stroke-dashoffset: 0.07;
+    stroke-dashoffset: 0.06;
   }
   to {
-    stroke-dashoffset: -0.93;
+    stroke-dashoffset: -0.94;
   }
 }
 
 .world--avaria[data-state='active'] .av-grid,
 .world--avaria[data-state='launching'] .av-grid,
-.world--avaria[data-state='active'] .av-glow,
-.world--avaria[data-state='launching'] .av-glow,
-.world--avaria[data-state='active'] .av-scan,
-.world--avaria[data-state='active'] .av-radar,
-.world--avaria[data-state='launching'] .av-radar {
+.world--avaria[data-state='active'] .av-atmosphere,
+.world--avaria[data-state='launching'] .av-atmosphere {
   opacity: 1;
 }
 
@@ -636,44 +505,47 @@
 .mc-base {
   inset: 0;
   background:
-    radial-gradient(56% 70% at 50% 50%, #0c1b50 0%, transparent 72%),
-    linear-gradient(180deg, #07123a 0%, var(--mc-bg) 58%, #030818 100%);
+    radial-gradient(60% 70% at 50% 50%, #090d1a 0%, transparent 75%),
+    linear-gradient(180deg, #06080f 0%, #05070d 60%, #04050a 100%);
 }
 
-.mc-nebula {
+/* Sparse blue light, concentrated behind the emblem. */
+.mc-glow {
   inset: 0;
   background:
-    radial-gradient(28% 40% at 24% 24%, rgb(var(--mc-violet-rgb) / 0.3), transparent 70%),
-    radial-gradient(32% 40% at 36% 80%, rgb(var(--mc-blue-rgb) / 0.3), transparent 70%),
-    radial-gradient(20% 30% at 8% 58%, rgb(var(--mc-cyan-rgb) / 0.1), transparent 70%);
-  opacity: 0.8;
-  animation: breathe 11s ease-in-out infinite alternate;
+    radial-gradient(22% 30% at 25% 42%, rgb(var(--mc-blue-rgb) / 0.12), transparent 72%),
+    radial-gradient(30% 30% at 4% 100%, rgb(40 60 140 / 0.14), transparent 70%);
+  opacity: 0.85;
+  animation: breathe 12s ease-in-out infinite alternate;
   transition: opacity var(--dur-shift) var(--ease-out);
 }
 
 @keyframes breathe {
   from {
-    opacity: 0.68;
+    opacity: 0.7;
   }
   to {
     opacity: 1;
   }
 }
 
-.mc-dots {
+/* Extremely faint technical grid. */
+.mc-grid {
   inset: 0;
-  background-image: radial-gradient(circle, rgb(150 180 255 / 0.22) 1px, transparent 1.5px);
-  background-size: 26px 26px;
-  background-position: left 13px top 13px;
-  -webkit-mask-image: radial-gradient(40% 55% at 20% 55%, #000 10%, transparent 78%);
-  mask-image: radial-gradient(40% 55% at 20% 55%, #000 10%, transparent 78%);
-  opacity: 0.7;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.028) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-position: left -1px top -1px;
+  -webkit-mask-image: radial-gradient(55% 70% at 26% 50%, #000 25%, transparent 85%);
+  mask-image: radial-gradient(55% 70% at 26% 50%, #000 25%, transparent 85%);
 }
 
 .mc-stars {
   inset: 0;
   width: 100%;
   height: 100%;
+  opacity: 0.55;
 }
 
 .mc-stars__far {
@@ -709,7 +581,7 @@
     opacity: 0.15;
   }
   50% {
-    opacity: 0.95;
+    opacity: 0.9;
   }
 }
 
@@ -719,7 +591,7 @@
   left: calc(8vw - 90vmin);
   bottom: calc(6vh - 90vmin);
   overflow: visible;
-  opacity: 0.7;
+  opacity: 0.4;
   transition: opacity var(--dur-shift) var(--ease-out);
 }
 
@@ -728,24 +600,14 @@
 }
 
 .mc-orbit--dotted {
-  stroke: rgb(140 170 255 / 0.5);
-  stroke-width: 1.4;
-  stroke-dasharray: 0.01 7;
+  stroke: rgb(150 170 220 / 0.45);
+  stroke-width: 1.3;
+  stroke-dasharray: 0.01 8;
   stroke-linecap: round;
 }
 
 .mc-orbit--solid {
-  stroke-width: 0.9;
-}
-
-.mc-orbit--dashed {
-  stroke: rgb(110 160 255 / 0.28);
   stroke-width: 0.8;
-  stroke-dasharray: 16 10;
-}
-
-.mc-orbit--faint {
-  stroke: rgb(150 150 255 / 0.2);
 }
 
 .mc-orbit-spin {
@@ -754,39 +616,35 @@
 }
 
 .mc-orbit-spin--a {
-  animation: spin 200s linear infinite;
-}
-
-.mc-orbit-spin--b {
-  animation: spin 280s linear infinite reverse;
+  animation: spin 220s linear infinite;
 }
 
 .mc-sat {
-  fill: rgb(232 238 255 / 0.95);
-  stroke: rgb(210 222 255 / 0.9);
+  fill: rgb(225 232 250 / 0.9);
+  stroke: rgb(200 212 240 / 0.8);
   stroke-width: 0.6;
 }
 
 .mc-sat__panel {
-  fill: rgb(90 140 255 / 0.6);
+  fill: rgb(80 130 230 / 0.55);
 }
 
 .mc-sat__halo {
-  fill: rgb(110 150 255 / 0.16);
+  fill: rgb(100 140 230 / 0.12);
   stroke: none;
 }
 
 .mc-dish {
   left: 4.5%;
   bottom: 4vh;
-  width: clamp(110px, 10vw, 190px);
+  width: clamp(100px, 9vw, 170px);
   height: auto;
   overflow: visible;
-  opacity: 0.8;
+  opacity: 0.45;
 }
 
 .mc-dish__ground {
-  stroke: rgb(150 170 255 / 0.35);
+  stroke: rgb(150 165 210 / 0.35);
   stroke-width: 1;
   stroke-dasharray: 2 5;
   stroke-linecap: round;
@@ -798,18 +656,18 @@
 .mc-dish__struts,
 .mc-dish__rim {
   fill: none;
-  stroke: rgb(180 196 255 / 0.62);
+  stroke: rgb(170 185 230 / 0.6);
   stroke-width: 1.3;
   stroke-linejoin: round;
 }
 
 .mc-dish__mount {
-  fill: rgb(12 22 66 / 0.9);
+  fill: rgb(10 14 30 / 0.9);
 }
 
 .mc-dish__bowl {
   fill: url(#mc-dish-fill);
-  stroke: rgb(196 210 255 / 0.72);
+  stroke: rgb(190 200 240 / 0.7);
   stroke-width: 1.3;
 }
 
@@ -819,11 +677,11 @@
 
 .mc-dish__signal path {
   fill: none;
-  stroke: rgb(150 200 255 / 0.85);
+  stroke: rgb(140 180 255 / 0.85);
   stroke-width: 1.6;
   stroke-linecap: round;
   opacity: 0.12;
-  animation: signal 3.6s var(--ease-out) infinite;
+  animation: signal 4.2s var(--ease-out) infinite;
 }
 
 .mc-dish__signal path:nth-child(2) {
@@ -837,30 +695,156 @@
 @keyframes signal {
   0%,
   100% {
-    opacity: 0.12;
+    opacity: 0.1;
   }
   18% {
-    opacity: 0.95;
+    opacity: 0.8;
   }
   52% {
-    opacity: 0.12;
+    opacity: 0.1;
   }
 }
 
 .world--machlava[data-state='active'] .mc-orbits,
 .world--machlava[data-state='launching'] .mc-orbits {
-  opacity: 1;
+  opacity: 0.7;
 }
 
-.world--machlava[data-state='active'] .mc-nebula,
-.world--machlava[data-state='launching'] .mc-nebula {
-  animation-duration: 6s;
+.world--machlava[data-state='active'] .mc-glow,
+.world--machlava[data-state='launching'] .mc-glow {
+  opacity: 1;
 }
 
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ───────────────────────── Emblem halos ───────────────────────── */
+
+.world__title {
+  position: relative;
+  isolation: isolate;
+}
+
+.halo {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Avaria: concentric targeting rings and a horizon line through the mark. */
+.halo--avaria {
+  left: 50%;
+  top: 50%;
+  width: 118%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+}
+
+.halo--avaria .halo__rings {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+}
+
+.halo__ring {
+  stroke: rgb(var(--av-violet-rgb) / 0.2);
+  stroke-width: 0.35;
+}
+
+.halo__ring--outer {
+  stroke: rgb(var(--av-violet-rgb) / 0.14);
+}
+
+.halo__ring--inner {
+  stroke: rgb(var(--av-violet-rgb) / 0.26);
+}
+
+.halo--avaria .halo__line {
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgb(170 150 220 / 0.3) 25%, rgb(170 150 220 / 0.3) 75%, transparent);
+}
+
+.halo--avaria::after {
+  content: '';
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(110 50 210 / 0.22), transparent);
+}
+
+/* המחלבה: a radial dial around the emblem, open at the bottom for the wordmark, with a slow sweep. */
+.halo--machlava {
+  /* Centre of the emblem within the supplied lockup (see scripts/prepare-brand-assets.py). */
+  left: 49.6%;
+  top: 36.4%;
+  width: 108%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+}
+
+.halo--machlava::before {
+  content: '';
+  position: absolute;
+  inset: 16%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(var(--mc-blue-rgb) / 0.2), transparent);
+}
+
+.halo__dial {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.halo__tick {
+  stroke: rgb(200 210 230 / 0.2);
+  stroke-width: 0.6;
+}
+
+.halo__tick--major {
+  stroke: rgb(220 228 245 / 0.42);
+  stroke-width: 0.9;
+}
+
+.halo__sweep-mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  /* Only the band between emblem and dial, and never behind the wordmark. */
+  -webkit-mask-image:
+    radial-gradient(closest-side, transparent 66%, #000 68%, #000 94%, transparent 96%),
+    conic-gradient(from 128deg, transparent 0 104deg, #000 104deg);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(closest-side, transparent 66%, #000 68%, #000 94%, transparent 96%),
+    conic-gradient(from 128deg, transparent 0 104deg, #000 104deg);
+  mask-composite: intersect;
+}
+
+.halo__sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 86%,
+    rgb(120 160 230 / 0.06) 92%,
+    rgb(160 190 240 / 0.3) 99.6%,
+    rgb(200 220 255 / 0.55) 100%
+  );
+  animation: spin 9s linear infinite;
 }
 
 /* ───────────────────────── Seam ───────────────────────── */
@@ -929,7 +913,7 @@
 .seam__bloom--machlava {
   left: auto;
   right: 0;
-  background: linear-gradient(to left, rgb(var(--mc-blue-rgb) / 0.26), rgb(var(--mc-blue-rgb) / 0.06) 34%, transparent);
+  background: linear-gradient(to left, rgb(var(--mc-blue-rgb) / 0.2), rgb(var(--mc-blue-rgb) / 0.04) 34%, transparent);
   opacity: 0.8;
 }
 
@@ -1138,7 +1122,7 @@
   display: block;
   width: 30px;
   height: auto;
-  opacity: 0.6;
+  opacity: 0.38;
 }
 
 .insignia--brand {
@@ -1160,7 +1144,7 @@
 }
 
 .insignia--foot img {
-  width: clamp(28px, 2.1vw, 36px);
+  width: clamp(24px, 1.7vw, 30px);
 }
 
 /* ───────────────────────── Intro ───────────────────────── */
@@ -1188,8 +1172,7 @@
 
   /* .cta itself must never carry a transform: it would trap the whole-world hit area (::after). */
   .world__identity > *,
-  .cta > *,
-  .world__route {
+  .cta > * {
     animation: rise-in 0.9s var(--ease-out) backwards;
   }
 
@@ -1202,9 +1185,7 @@
   .cta > * {
     animation-delay: 0.6s;
   }
-  .world__route {
-    animation-delay: 0.72s;
-  }
+
 }
 
 @keyframes beam-in {
@@ -1277,7 +1258,7 @@
 
   .world--machlava .world__logo {
     max-height: none;
-    width: min(50vw, 14rem);
+    width: min(44vw, 12.5rem);
   }
 
   .world__tagline {
@@ -1317,50 +1298,37 @@
   }
 
   .av-grid {
-    -webkit-mask-image: radial-gradient(70% 70% at 50% 60%, #000 15%, transparent 80%);
-    mask-image: radial-gradient(70% 70% at 50% 60%, #000 15%, transparent 80%);
+    -webkit-mask-image: radial-gradient(70% 70% at 50% 50%, #000 15%, transparent 85%);
+    mask-image: radial-gradient(70% 70% at 50% 50%, #000 15%, transparent 85%);
   }
 
-  .av-glow {
+  .av-atmosphere {
     background:
-      radial-gradient(60% 50% at 50% 110%, rgb(var(--av-violet-rgb) / 0.34), transparent 70%),
-      radial-gradient(40% 40% at 50% 45%, rgb(var(--av-violet-rgb) / 0.1), transparent 70%);
+      radial-gradient(60% 45% at 90% 0%, rgb(88 28 170 / 0.45), transparent 72%),
+      radial-gradient(50% 40% at 10% 100%, rgb(60 24 120 / 0.3), transparent 70%);
   }
 
-  .av-scan {
-    left: 0;
-    height: 22vh;
-  }
-
-  .av-ruler {
-    right: 12px;
-    top: 14%;
-    bottom: 14%;
-  }
-
-  .av-radar {
-    right: -22vw;
-    top: -22vw;
-    width: 72vw;
-    opacity: 0.55;
+  .av-corner-rings {
+    right: -24vw;
+    bottom: -30vw;
+    width: 70vw;
+    height: 70vw;
   }
 
   .av-trace {
     left: 0;
     width: 100%;
-    bottom: 6%;
-    height: 14%;
+    bottom: 12%;
+    height: 12%;
   }
 
-  .mc-nebula {
-    background:
-      radial-gradient(50% 45% at 20% 30%, rgb(112 64 232 / 0.36), transparent 70%),
-      radial-gradient(50% 45% at 80% 85%, rgb(40 72 224 / 0.32), transparent 70%);
+  .mc-glow {
+    background: radial-gradient(50% 40% at 50% 52%, rgb(var(--mc-blue-rgb) / 0.14), transparent 72%);
   }
 
-  .mc-dots {
-    -webkit-mask-image: radial-gradient(70% 60% at 50% 55%, #000 10%, transparent 80%);
-    mask-image: radial-gradient(70% 60% at 50% 55%, #000 10%, transparent 80%);
+  .mc-grid {
+    -webkit-mask-image: radial-gradient(70% 60% at 50% 55%, #000 20%, transparent 85%);
+    mask-image: radial-gradient(70% 60% at 50% 55%, #000 20%, transparent 85%);
   }
 
   .mc-orbits {
@@ -1373,8 +1341,8 @@
   .mc-dish {
     left: 5%;
     bottom: 12px;
-    width: 88px;
-    opacity: 0.75;
+    width: 80px;
+    opacity: 0.4;
   }
 
   /* Seam turns horizontal and carries the brand. */
@@ -1437,7 +1405,7 @@
 
   .seam__bloom--machlava {
     translate: 0 0;
-    background: linear-gradient(to bottom, rgb(var(--mc-blue-rgb) / 0.28), transparent);
+    background: linear-gradient(to bottom, rgb(var(--mc-blue-rgb) / 0.12), transparent 80%);
   }
 
   .seam__ticks {
@@ -1507,7 +1475,7 @@
 
   .insignia--brand img {
     display: block;
-    width: 22px;
+    width: 18px;
   }
 
   .insignia--brand img:first-child {
@@ -1564,8 +1532,8 @@
     display: none;
   }
 
-  .av-radar {
-    width: 44vmin;
+  .av-corner-rings {
+    display: none;
   }
 }
 
@@ -1601,11 +1569,6 @@
   .world[data-state] .cta__frame,
   .world[data-state] .cta__arrow {
     transform: none;
-  }
-
-  /* A static scan line keeps Avaria's diagnostic character without movement. */
-  .av-scan {
-    transform: translateY(30vh);
   }
 }
 

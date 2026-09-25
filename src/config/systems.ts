@@ -31,6 +31,15 @@ export interface SystemDefinition {
   readonly destination: Destination
 }
 
+/**
+ * Production entry points. Used unless overridden at build time by
+ * VITE_AVARIA_URL / VITE_MACHLAVA_URL (see `.env.example`).
+ */
+export const DEFAULT_DESTINATIONS = {
+  avaria: 'https://takalot.vercel.app/',
+  machlava: 'https://luzly.vercel.app/',
+} as const satisfies Record<SystemId, string>
+
 export interface SystemSources {
   readonly avariaUrl?: string
   readonly machlavaUrl?: string
@@ -60,8 +69,8 @@ export function createSystems(sources: SystemSources, base: string): readonly [S
 export function systemsFromEnv(): readonly [SystemDefinition, SystemDefinition] {
   return createSystems(
     {
-      avariaUrl: import.meta.env.VITE_AVARIA_URL,
-      machlavaUrl: import.meta.env.VITE_MACHLAVA_URL,
+      avariaUrl: import.meta.env.VITE_AVARIA_URL || DEFAULT_DESTINATIONS.avaria,
+      machlavaUrl: import.meta.env.VITE_MACHLAVA_URL || DEFAULT_DESTINATIONS.machlava,
     },
     window.location.href,
   )

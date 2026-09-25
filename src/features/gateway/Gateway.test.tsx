@@ -65,6 +65,11 @@ describe('Gateway', () => {
     expect(container).not.toHaveTextContent(/NOMINAL|ONLINE|ACTIVE|DIAG|THRESHOLD|SYS·/i)
   })
 
+  it('does not display destination URLs or routing details', () => {
+    const { container } = setup()
+    expect(container).not.toHaveTextContent(/ROUTE|example\.com|https?:/i)
+  })
+
   it('links each entry to its configured destination, in DOM (tab) order', () => {
     setup()
     const links = screen.getAllByRole('link')
@@ -118,7 +123,8 @@ describe('Gateway', () => {
     fireEvent.click(machlavaLink())
     expect(main).toHaveAttribute('data-launching', 'machlava')
     expect(screen.getByRole('region', { name: 'המחלבה' })).toHaveAttribute('data-state', 'launching')
-    expect(screen.getByText('CONNECTING')).toBeInTheDocument()
+    // Announced through an <output> (implicit role="status") for assistive technology.
+    expect(screen.getByText('מתחבר ל־המחלבה…').tagName).toBe('OUTPUT')
     expect(navigate).not.toHaveBeenCalled()
 
     act(() => vi.advanceTimersByTime(LAUNCH_DELAY_MS))
@@ -162,7 +168,6 @@ describe('Gateway', () => {
     setup(createSystems({ avariaUrl: 'javascript:alert(1)', machlavaUrl: 'https://machlava.example.com/' }, BASE))
     expect(screen.queryByRole('link', { name: 'כניסה ל־Avaria' })).not.toBeInTheDocument()
     expect(screen.getByText('כתובת היעד טרם הוגדרה')).toBeInTheDocument()
-    expect(screen.getByText('NO ROUTE')).toBeInTheDocument()
     expect(machlavaLink()).toBeInTheDocument()
   })
 })

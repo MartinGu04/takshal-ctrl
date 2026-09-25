@@ -10,7 +10,6 @@ system and hands the user over to it in the same tab.
 
 ```bash
 npm install
-cp .env.example .env.local   # set the two destination URLs
 npm run dev
 ```
 
@@ -31,12 +30,14 @@ refresh the baselines with `npx playwright test e2e/visual.spec.ts --update-snap
 
 ## Configuring destinations
 
-Destinations come from build-time environment variables. No component contains a URL.
+Destinations live in one place, `DEFAULT_DESTINATIONS` in
+[`src/config/systems.ts`](src/config/systems.ts). No component contains a URL, and none is
+displayed in the interface.
 
-| Variable            | Purpose                  |
-| ------------------- | ------------------------ |
-| `VITE_AVARIA_URL`   | Entry URL for Avaria     |
-| `VITE_MACHLAVA_URL` | Entry URL for המחלבה     |
+| System  | Production URL                 | Optional build-time override |
+| ------- | ------------------------------ | ---------------------------- |
+| Avaria  | `https://takalot.vercel.app/`  | `VITE_AVARIA_URL`            |
+| המחלבה  | `https://luzly.vercel.app/`    | `VITE_MACHLAVA_URL`          |
 
 Accepted values are absolute `http(s)` URLs or same-origin paths (e.g. `/avaria/`). Anything
 else — missing, malformed, `javascript:`, `data:` — is rejected by
@@ -96,15 +97,17 @@ src/
   and lifts its CTA; the other recedes. The whole half is the click/tap target. On click the
   chosen world fills the screen for ~0.5s, then navigates. Modified clicks (⌘/Ctrl/Shift, middle
   click) are left to the browser.
-- **Brand-true worlds.** Avaria: near-black navy, violet, a touch of magenta, dotted technical
-  grid, radar rings and a heartbeat line, from the real Avaria mark. המחלבה: deep navy space,
-  electric blue → violet, orbits, satellites, stars and a dish, from the real המחלבה logo. The
-  portal itself (wordmark, seam core) stays neutral white; the seam glows blue on the המחלבה
-  side and violet/magenta on the Avaria side.
-- **Motion identities.** Avaria: radar sweep, scan line, heartbeat pulse. המחלבה: orbital drift,
-  star twinkle, nebula breathing, dish signal.
-- **No fake telemetry.** The only status text is real: each entry's destination host, and
-  "CONNECTING" during the hand-off.
+- **Brand-true worlds**, referenced from the real entry screens. Avaria: black-purple base,
+  deep violet atmosphere, fine dotted grid, concentric targeting rings and a horizon line behind
+  the mark, one heartbeat line. המחלבה: almost-black navy, an extremely faint grid, sparse blue
+  light, a radial dial with a slow sweep around the emblem, and restrained SATCOM cues (a few
+  stars, quiet orbits, a dish). The portal itself (wordmark, seam core) stays neutral white;
+  the seam glows blue toward המחלבה and violet toward Avaria.
+- **Motion identities.** Avaria: heartbeat pulse, atmosphere breathing. המחלבה: dial sweep,
+  orbital drift, star twinkle, dish signal.
+- **No fake telemetry, no routing details.** The only interface copy is each system's name,
+  Avaria's tagline and the two entry actions. The hand-off is announced to assistive
+  technology ("מתחבר ל־…").
 - **Reduced motion.** All animation stops, the split no longer moves, links navigate directly.
   The static composition is designed to stand on its own.
 - **Backdrops are sized to the viewport, not the half,** so the seam slides over them like a
