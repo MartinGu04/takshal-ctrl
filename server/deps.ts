@@ -17,8 +17,8 @@ export function hubDeps(env: EnvSource = process.env): HubDeps | null {
     cached = null
     return cached
   }
-  const { supabaseUrl, supabaseServiceRoleKey, vapidPublicKey, vapidPrivateKey, vapidSubject } = config.value
-  const db = createClient(supabaseUrl, supabaseServiceRoleKey, {
+  const { supabaseUrl, supabaseSecretKey, vapidPublicKey, vapidPrivateKey, vapidSubject } = config.value
+  const db = createClient(supabaseUrl, supabaseSecretKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   })
   cached = {

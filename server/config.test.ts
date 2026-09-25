@@ -6,7 +6,7 @@ import { endpointFingerprint, isAllowedPushEndpoint } from './validation.js'
 describe('hub environment', () => {
   const full = {
     SUPABASE_URL: 'https://p.supabase.co',
-    SUPABASE_SERVICE_ROLE_KEY: 'service',
+    SUPABASE_SECRET_KEY: 'sb_secret_server_test_key',
     VITE_VAPID_PUBLIC_KEY: 'pub',
     VAPID_PRIVATE_KEY: 'priv',
     VAPID_SUBJECT: 'mailto:ops@example.com',
@@ -15,13 +15,27 @@ describe('hub environment', () => {
   it('reads a complete configuration', () => {
     expect(readHubEnv(full)).toEqual({
       ok: true,
-      value: { supabaseUrl: full.SUPABASE_URL, supabaseServiceRoleKey: 'service', vapidPublicKey: 'pub', vapidPrivateKey: 'priv', vapidSubject: full.VAPID_SUBJECT },
+      value: { supabaseUrl: full.SUPABASE_URL, supabaseSecretKey: 'sb_secret_server_test_key', vapidPublicKey: 'pub', vapidPrivateKey: 'priv', vapidSubject: full.VAPID_SUBJECT },
     })
   })
 
   it('reports what is missing, and validates the VAPID subject', () => {
-    expect(readHubEnv({})).toMatchObject({ ok: false, missing: expect.arrayContaining(['SUPABASE_SERVICE_ROLE_KEY', 'VAPID_PRIVATE_KEY']) })
+    expect(readHubEnv({})).toMatchObject({ ok: false, missing: expect.arrayContaining(['SUPABASE_SECRET_KEY', 'VAPID_PRIVATE_KEY']) })
     expect(readHubEnv({ ...full, VAPID_SUBJECT: 'ops@example.com' })).toMatchObject({ ok: false })
+  })
+
+  it('requires a Supabase secret key (sb_secret_…)', () => {
+    const publishable = readHubEnv({ ...full, SUPABASE_SECRET_KEY: 'sb_publishable_oops' })
+    expect(publishable).toMatchObject({ ok: false, missing: [expect.stringContaining('a publishable key was given')] })
+
+    const legacyServiceRole = readHubEnv({ ...full, SUPABASE_SECRET_KEY: 'eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.sig' })
+    expect(legacyServiceRole).toMatchObject({ ok: false, missing: [expect.stringContaining('legacy service_role keys are not supported')] })
+  })
+
+  it('no longer reads the legacy variable names', () => {
+    const { SUPABASE_SECRET_KEY: _unused, ...rest } = full
+    void _unused
+    expect(readHubEnv({ ...rest, SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_x' })).toMatchObject({ ok: false, missing: ['SUPABASE_SECRET_KEY'] })
   })
 })
 

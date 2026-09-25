@@ -180,9 +180,11 @@ URLs, `//host`, backslashes, whitespace/control characters and `javascript:` are
 ### Security properties
 
 - Recipients are always derived from the verified session; the browser never names a user or email.
-- Supabase **service role key** and **VAPID private key** exist only in server env vars (never
-  `VITE_`-prefixed, never bundled). The anon/publishable key in the bundle cannot read or write
-  the hub tables: RLS is on with no policies, and privileges are revoked from `anon`/`authenticated`.
+- Supabase **secret key** (`sb_secret_…`) and **VAPID private key** exist only in server env vars
+  (never `VITE_`-prefixed, never bundled). The **publishable key** (`sb_publishable_…`) in the
+  bundle cannot read or write the hub tables: RLS is on with no policies, and privileges are
+  revoked from `anon`/`authenticated`. The build refuses to run if any `VITE_` variable holds a
+  secret key (new or legacy `service_role`).
 - Push endpoints are treated as secrets: never returned by the API, never logged (logs use a
   `host…last6` fingerprint), and restricted to the known push services (prevents SSRF).
 - JSON-only bodies (≤ 8 KB), strict validation on every field, no CORS (cross-origin calls fail
@@ -196,8 +198,15 @@ URLs, `//host`, backslashes, whitespace/control characters and `javascript:` are
 > you can perform (they involve accounts and secrets).
 
 **1. Backend (Supabase).** Create a dedicated Supabase project for TAKSHAL CTRL (not the
-Avaria or המחלבה databases). Note its **Project URL**, **anon/publishable key** and **service
-role/secret key** (Project Settings → API).
+Avaria or המחלבה databases). TAKSHAL CTRL uses Supabase's **publishable / secret key** model,
+not the legacy JWT-based `anon` / `service_role` keys. In Project Settings → **API Keys**:
+- copy the **Publishable key** (`sb_publishable_…`), which is safe in the browser and acts as the `anon` role;
+- create a **Secret key** named e.g. `takshal-ctrl-hub` and copy it (`sb_secret_…`). It is server
+  only, acts as the `service_role` role, and can be rotated or revoked independently;
+- note the **Project URL** (`https://<project-ref>.supabase.co`).
+
+Legacy `anon` / `service_role` keys are rejected by the hub's validation; you may disable them in
+the dashboard once nothing else uses them.
 
 **2. Google authentication.**
 1. Google Cloud Console → APIs & Services → OAuth consent screen: configure (External or
@@ -230,15 +239,15 @@ Do not commit them. The public key goes into `VITE_VAPID_PUBLIC_KEY`, the privat
 | Variable | Scope | Value |
 | --- | --- | --- |
 | `VITE_SUPABASE_URL` | client (public) | `https://<project-ref>.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | client (public) | anon / publishable key |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | client (public) | publishable key, `sb_publishable_…` |
 | `VITE_VAPID_PUBLIC_KEY` | client (public) | VAPID public key |
 | `SUPABASE_URL` | server | optional — defaults to `VITE_SUPABASE_URL` |
-| `SUPABASE_SERVICE_ROLE_KEY` | **server secret** | service role / secret key |
+| `SUPABASE_SECRET_KEY` | **server secret** | secret key, `sb_secret_…` |
 | `VAPID_PRIVATE_KEY` | **server secret** | VAPID private key |
 | `VAPID_SUBJECT` | server | `mailto:you@yourdomain` (or an `https://` URL) |
 
 **6. Vercel environment variables.** Project → Settings → Environment Variables: add all
-seven above for **Production** and **Preview** (mark `SUPABASE_SERVICE_ROLE_KEY` and
+seven above for **Production** and **Preview** (mark `SUPABASE_SECRET_KEY` and
 `VAPID_PRIVATE_KEY` as *Sensitive*), then redeploy. `VITE_*` values are baked in at build time,
 so a redeploy is required after changing them. The `api/` directory is deployed as Vercel
 Functions automatically; `vercel.json` adds the `/open` rewrite and `sw.js` cache headers.

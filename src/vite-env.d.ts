@@ -7,8 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_MACHLAVA_URL?: string
   /** Supabase project URL (public). Enables Google sign-in for notification enrollment. */
   readonly VITE_SUPABASE_URL?: string
-  /** Supabase anon / publishable key (public; all hub tables are closed to it by RLS). */
-  readonly VITE_SUPABASE_ANON_KEY?: string
+  /** Supabase publishable key, `sb_publishable_…` (public; all hub tables are closed to it by RLS). */
+  readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string
   /** VAPID public key (base64url). The private key is server-only. */
   readonly VITE_VAPID_PUBLIC_KEY?: string
 }

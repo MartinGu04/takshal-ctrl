@@ -27,7 +27,7 @@ let client: Promise<SupabaseClient> | null = null
 
 function supabase(config: NotificationConfig): Promise<SupabaseClient> {
   client ??= import('@supabase/supabase-js').then(({ createClient }) =>
-    createClient(config.supabaseUrl, config.supabaseAnonKey, {
+    createClient(config.supabaseUrl, config.supabasePublishableKey, {
       auth: { flowType: 'pkce', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'takshal-ctrl-auth' },
     }),
   )

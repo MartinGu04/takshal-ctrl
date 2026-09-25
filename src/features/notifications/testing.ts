@@ -48,7 +48,7 @@ export function createFakes(overrides: Partial<Fakes> = {}): Fakes {
   }
 }
 
-export function fakeController(fakes: Fakes, config: ControllerDeps['config'] = { supabaseUrl: 'https://p.supabase.co', supabaseAnonKey: 'anon', vapidPublicKey: 'BKey' }) {
+export function fakeController(fakes: Fakes, config: ControllerDeps['config'] = { supabaseUrl: 'https://p.supabase.co', supabasePublishableKey: 'sb_publishable_test', vapidPublicKey: 'BKey' }) {
   const auth: AuthPort = {
     getSession: async () => fakes.session,
     signIn: async () => void fakes.calls.push('signIn'),

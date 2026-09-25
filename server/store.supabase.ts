@@ -1,4 +1,4 @@
-/** Supabase (Postgres) implementation of the subscription store, used with the service role key. */
+/** Supabase (Postgres) implementation of the subscription store, used with the secret key (service_role). */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { NotificationEvent, StoredSubscription, SubscriptionStore } from './store.js'

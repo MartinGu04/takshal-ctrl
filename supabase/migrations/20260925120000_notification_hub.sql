@@ -1,9 +1,10 @@
 -- TAKSHAL CTRL Notification Hub — push subscriptions and notification events.
 --
 -- Access model: these tables are reachable ONLY through the hub's server-side API, which uses
--- the service role key. RLS is enabled with no policies, and table privileges are revoked from
--- the public `anon` and `authenticated` roles, so the browser (anon/publishable key) can never
--- read or write them — push endpoints and keys are delivery capabilities and must stay private.
+-- the Supabase secret key (sb_secret_…, Postgres role `service_role`). RLS is enabled with no
+-- policies, and table privileges are revoked from the public `anon` and `authenticated` roles,
+-- so the browser (publishable key sb_publishable_…, role `anon`) can never read or write them —
+-- push endpoints and keys are delivery capabilities and must stay private.
 
 create extension if not exists pgcrypto;
 

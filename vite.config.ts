@@ -1,7 +1,8 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
-import { build, defineConfig, type Plugin } from 'vite'
+import { build, defineConfig, loadEnv, type Plugin } from 'vite'
+import { findClientExposedSecrets } from './src/shared/supabaseKeys.ts'
 
 const swConfig = fileURLToPath(new URL('./vite.sw.config.ts', import.meta.url))
 
@@ -28,17 +29,34 @@ function serviceWorkerInDev(): Plugin {
   }
 }
 
+/**
+ * Refuses to build or serve when a Supabase secret key (sb_secret_… or a legacy service_role
+ * JWT) sits in a VITE_-prefixed variable: those are inlined into the public browser bundle.
+ */
+function guardClientSecrets(mode: string): void {
+  const leaked = findClientExposedSecrets(loadEnv(mode, process.cwd(), 'VITE_'))
+  if (leaked.length) {
+    throw new Error(
+      `Refusing to bundle a Supabase secret key into the browser: ${leaked.join(', ')}. ` +
+        'Use the publishable key (sb_publishable_…) in VITE_SUPABASE_PUBLISHABLE_KEY; the secret key belongs only in SUPABASE_SECRET_KEY (server).',
+    )
+  }
+}
+
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), serviceWorkerInDev()],
-  build: {
-    target: 'es2022',
-  },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}', 'server/**/*.test.ts'],
-    css: false,
-  },
+export default defineConfig(({ mode }) => {
+  guardClientSecrets(mode)
+  return {
+    plugins: [react(), serviceWorkerInDev()],
+    build: {
+      target: 'es2022',
+    },
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      setupFiles: ['./src/test/setup.ts'],
+      include: ['src/**/*.test.{ts,tsx}', 'server/**/*.test.ts'],
+      css: false,
+    },
+  }
 })
