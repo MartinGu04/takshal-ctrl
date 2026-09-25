@@ -1,18 +1,14 @@
 import { useEffect, useMemo } from 'react'
 import { systemsFromEnv } from './config/systems'
 import { Gateway } from './features/gateway/Gateway'
-import { OpenHandoff } from './features/handoff/OpenHandoff'
-import { NotificationControl } from './features/notifications/NotificationControl'
-import { HANDOFF_PATH } from './shared/notifications/handoff'
 import { hintOrigin } from './lib/resourceHints'
 
 /**
- * Application shell. The gateway is the portal; the notification control sits beside it as a
- * separate layer. `/open` is the notification-click hand-off route.
+ * Application shell. The portal is the gateway and nothing else: each system keeps its own
+ * notifications, auth and data; TAKSHAL CTRL only links to them.
  */
 export function App() {
   const systems = useMemo(() => systemsFromEnv(), [])
-  const isHandoff = window.location.pathname === HANDOFF_PATH
 
   useEffect(() => {
     for (const { destination, id } of systems) {
@@ -21,12 +17,5 @@ export function App() {
     }
   }, [systems])
 
-  if (isHandoff) return <OpenHandoff systems={systems} />
-
-  return (
-    <>
-      <Gateway systems={systems} />
-      <NotificationControl />
-    </>
-  )
+  return <Gateway systems={systems} />
 }
