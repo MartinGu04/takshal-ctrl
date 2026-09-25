@@ -24,6 +24,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["src"],
-  "exclude": ["src/sw/service-worker.ts"]
+  "include": ["src"]
 }
