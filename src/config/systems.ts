@@ -8,9 +8,10 @@
 
 import avariaLogo from '../assets/brand/avaria-logo.webp'
 import machlavaLogo from '../assets/brand/machlava-logo.webp'
+import { DEFAULT_DESTINATIONS, type SystemId } from '../shared/destinations'
 import { resolveDestination, type Destination } from './destination'
 
-export type SystemId = 'avaria' | 'machlava'
+export { DEFAULT_DESTINATIONS, type SystemId }
 
 /** A supplied brand asset, derived from brand/source/ by scripts/prepare-brand-assets.py. */
 export interface BrandLogo {
@@ -30,15 +31,6 @@ export interface SystemDefinition {
   readonly ctaLabel: string
   readonly destination: Destination
 }
-
-/**
- * Production entry points. Used unless overridden at build time by
- * VITE_AVARIA_URL / VITE_MACHLAVA_URL (see `.env.example`).
- */
-export const DEFAULT_DESTINATIONS = {
-  avaria: 'https://takalot.vercel.app/',
-  machlava: 'https://luzly.vercel.app/',
-} as const satisfies Record<SystemId, string>
 
 export interface SystemSources {
   readonly avariaUrl?: string

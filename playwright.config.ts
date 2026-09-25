@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
-import { E2E_AVARIA_URL, E2E_MACHLAVA_URL } from './e2e/destinations.ts'
+import { E2E_AVARIA_URL, E2E_MACHLAVA_URL, E2E_SUPABASE_PUBLISHABLE_KEY, E2E_SUPABASE_URL, E2E_VAPID_PUBLIC_KEY } from './e2e/destinations.ts'
 
 const PORT = 4173
 
@@ -27,6 +27,9 @@ export default defineConfig({
     env: {
       VITE_AVARIA_URL: E2E_AVARIA_URL,
       VITE_MACHLAVA_URL: E2E_MACHLAVA_URL,
+      VITE_SUPABASE_URL: E2E_SUPABASE_URL,
+      VITE_SUPABASE_PUBLISHABLE_KEY: E2E_SUPABASE_PUBLISHABLE_KEY,
+      VITE_VAPID_PUBLIC_KEY: E2E_VAPID_PUBLIC_KEY,
     },
   },
 })

@@ -1,26 +1,29 @@
 {
   "name": "takshal-ctrl",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "TAKSHAL CTRL — a cinematic split-screen gateway to Avaria and המחלבה.",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && vite build --config vite.sw.config.ts",
     "preview": "vite preview",
     "lint": "oxlint",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "vapid:generate": "web-push generate-vapid-keys"
   },
   "dependencies": {
     "@fontsource-variable/heebo": "^5.3.0",
     "@fontsource-variable/space-grotesk": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
+    "@supabase/supabase-js": "^2.117.2",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
@@ -30,6 +33,7 @@
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
+    "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "^27.0.0",
     "oxlint": "^1.81.0",

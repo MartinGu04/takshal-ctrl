@@ -88,6 +88,28 @@ def insignia(name: str, source: str, height: int):
     print(f"{name}.webp  {img.size[0]}x{img.size[1]}")
 
 
+def notification_icon(name: str, source: str, box: tuple[int, int, int, int], background: tuple[int, int, int], size: int = 192, circle: bool = False):
+    """
+    Square notification icon: a crop of the supplied artwork (never redrawn), centred on the
+    artwork's own background colour. With circle=True only the inscribed disc is kept (so
+    neighbouring artwork does not bleed in). Written to public/icons/ so it is served same-origin.
+    """
+    art = Image.open(SRC / source).convert("RGB").crop(box)
+    if circle:
+        from PIL import ImageDraw
+        mask = Image.new("L", art.size, 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, art.size[0] - 1, art.size[1] - 1), fill=255)
+        art = Image.composite(art, Image.new("RGB", art.size, background), mask)
+    side = max(art.size)
+    canvas = Image.new("RGB", (side, side), background)
+    canvas.paste(art, ((side - art.size[0]) // 2, (side - art.size[1]) // 2))
+    canvas = canvas.resize((size, size), Image.Resampling.LANCZOS)
+    path = ROOT / "public" / "icons" / f"{name}.png"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    canvas.save(path, optimize=True)
+    print(f"icons/{name}.png  {size}x{size}")
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     logo("avaria-logo", "avaria-logo.png", bg=(0, 0, 0))
@@ -95,3 +117,6 @@ if __name__ == "__main__":
     logo("machlava-logo", "machlava-logo.webp", bg=(5, 12, 39), keep_disc=(623, 453, 411), max_width=960)
     insignia("502-strategic-communication", "502-strategic-communication.webp", height=160)
     insignia("502-satcom", "502-satcom.webp", height=160)
+    # Notification icons: the Avaria mark (without the wordmark) and the המחלבה emblem disc.
+    notification_icon("notify-avaria-192", "avaria-logo.png", box=(140, 270, 660, 670), background=(0, 0, 0))
+    notification_icon("notify-machlava-192", "machlava-logo.webp", box=(208, 38, 1038, 868), background=(5, 12, 39), circle=True)
