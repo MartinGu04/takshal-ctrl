@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createSystems } from '../../config/systems'
 import { Gateway } from './Gateway'
 import { LAUNCH_DELAY_MS } from './useLaunch'
@@ -34,9 +34,22 @@ function setup(systems = configured) {
 
 const avariaLink = () => screen.getByRole('link', { name: 'כניסה ל־Avaria' })
 const machlavaLink = () => screen.getByRole('link', { name: 'כניסה להמחלבה' })
+const region = (name: string) => screen.getByRole('region', { name })
+const mouse = { pointerType: 'mouse' }
+
+/** Answers media queries with the given predicate (jsdom otherwise matches nothing). */
+const realMatchMedia = window.matchMedia
+function mockMedia(matches: (query: string) => boolean) {
+  window.matchMedia = ((query: string) => ({ ...realMatchMedia(query), matches: matches(query) })) as typeof window.matchMedia
+}
+/** A laptop or desktop with a mouse: hover-capable, side-by-side layout. */
+const desktopPointer = (query: string) => /hover: hover|min-width/.test(query)
 
 describe('Gateway', () => {
-  afterEach(() => vi.useRealTimers())
+  afterEach(() => {
+    vi.useRealTimers()
+    window.matchMedia = realMatchMedia
+  })
 
   it('renders the portal identity and both systems', () => {
     setup()
@@ -94,26 +107,102 @@ describe('Gateway', () => {
   })
 
   it('lets the most recent input lead: keyboard focus overrides a resting mouse, and vice versa', () => {
+    mockMedia(desktopPointer)
     const { main } = setup()
-    const machlava = screen.getByRole('region', { name: 'המחלבה' })
-    const matchMedia = window.matchMedia
-    window.matchMedia = ((query: string) => ({ ...matchMedia(query), matches: query === '(hover: hover)' })) as typeof window.matchMedia
-    try {
-      fireEvent.pointerEnter(machlava, { pointerType: 'mouse' })
-      expect(main).toHaveAttribute('data-active', 'machlava')
+    const machlava = region('המחלבה')
 
-      act(() => avariaLink().focus())
-      expect(main).toHaveAttribute('data-active', 'avaria')
+    fireEvent.pointerEnter(machlava, mouse)
+    expect(main).toHaveAttribute('data-active', 'machlava')
 
-      fireEvent.pointerLeave(machlava, { pointerType: 'mouse' })
-      fireEvent.pointerEnter(machlava, { pointerType: 'mouse' })
-      expect(main).toHaveAttribute('data-active', 'machlava')
+    act(() => avariaLink().focus())
+    expect(main).toHaveAttribute('data-active', 'avaria')
 
-      fireEvent.pointerLeave(machlava, { pointerType: 'mouse' })
-      expect(main).toHaveAttribute('data-active', 'avaria')
-    } finally {
-      window.matchMedia = matchMedia
-    }
+    fireEvent.pointerLeave(machlava, mouse)
+    fireEvent.pointerEnter(machlava, mouse)
+    expect(main).toHaveAttribute('data-active', 'machlava')
+
+    fireEvent.pointerLeave(machlava, mouse)
+    expect(main).toHaveAttribute('data-active', 'avaria')
+  })
+
+  it('never takes hover emphasis from touch', () => {
+    mockMedia(desktopPointer)
+    const { main } = setup()
+    fireEvent.pointerEnter(region('Avaria'), { pointerType: 'touch' })
+    expect(main).toHaveAttribute('data-active', 'none')
+  })
+
+  it('hands emphasis straight across when focus moves between the worlds', () => {
+    const { main } = setup()
+    act(() => avariaLink().focus())
+    // From idle it is an ordinary lean-in, not a crossing.
+    expect(main).not.toHaveAttribute('data-crossing')
+
+    // Tab: the browser reports focus leaving one link and reaching the next as two separate
+    // events, and React renders in between.
+    act(() => {
+      avariaLink().dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: machlavaLink() }))
+    })
+    act(() => machlavaLink().focus())
+    expect(main).toHaveAttribute('data-active', 'machlava')
+    expect(main).toHaveAttribute('data-crossing', 'machlava')
+
+    act(() => machlavaLink().blur())
+    expect(main).toHaveAttribute('data-active', 'none')
+    expect(main).not.toHaveAttribute('data-crossing')
+  })
+
+  it('crosses when the pointer moves straight from one world to the other, not after resting idle', () => {
+    mockMedia(desktopPointer)
+    const { main } = setup()
+    const avaria = region('Avaria')
+    const machlava = region('המחלבה')
+
+    fireEvent.pointerEnter(avaria, mouse)
+    expect(main).not.toHaveAttribute('data-crossing')
+
+    // The browser reports leaving one world and entering the other as a single move.
+    act(() => {
+      fireEvent.pointerLeave(avaria, mouse)
+      fireEvent.pointerEnter(machlava, mouse)
+    })
+    expect(main).toHaveAttribute('data-crossing', 'machlava')
+
+    fireEvent.pointerLeave(machlava, mouse)
+    expect(main).toHaveAttribute('data-active', 'none')
+    fireEvent.pointerEnter(avaria, mouse)
+    expect(main).toHaveAttribute('data-active', 'avaria')
+    expect(main).not.toHaveAttribute('data-crossing')
+  })
+
+  it('runs the micro-parallax only for hover-capable desktops, never with reduced motion or touch', () => {
+    expect(setup().main).not.toHaveAttribute('data-parallax')
+    cleanup()
+
+    mockMedia(desktopPointer)
+    expect(setup().main).toHaveAttribute('data-parallax')
+    cleanup()
+
+    mockMedia((query) => desktopPointer(query) || query === '(prefers-reduced-motion: reduce)')
+    expect(setup().main).not.toHaveAttribute('data-parallax')
+  })
+
+  it('eases the pointer position into the parallax depth, ignoring touch', async () => {
+    mockMedia(desktopPointer)
+    const { main } = setup()
+    const px = () => Number(main.style.getPropertyValue('--px') || 0)
+    const move = (pointerType: string) =>
+      window.dispatchEvent(
+        new PointerEvent('pointermove', { clientX: window.innerWidth, clientY: window.innerHeight / 2, pointerType }),
+      )
+
+    move('touch')
+    await new Promise((resolve) => setTimeout(resolve, 60))
+    expect(px()).toBe(0)
+
+    move('mouse')
+    await vi.waitFor(() => expect(px()).toBeGreaterThan(0.5))
+    expect(px()).toBeLessThanOrEqual(1)
   })
 
   it('plays the hand-off, then navigates in the same tab', () => {
@@ -129,6 +218,14 @@ describe('Gateway', () => {
 
     act(() => vi.advanceTimersByTime(LAUNCH_DELAY_MS))
     expect(navigate).toHaveBeenCalledExactlyOnceWith('https://machlava.example.com/app')
+  })
+
+  it('starts navigating almost at once: the hand-off overlaps the page load instead of delaying it', () => {
+    vi.useFakeTimers()
+    const { navigate } = setup()
+    fireEvent.click(avariaLink())
+    act(() => vi.advanceTimersByTime(200))
+    expect(navigate).toHaveBeenCalledExactlyOnceWith('https://avaria.example.com/')
   })
 
   it('ignores repeated activation while a hand-off is in flight', () => {
@@ -149,19 +246,11 @@ describe('Gateway', () => {
   })
 
   it('uses plain links with no hand-off when the user prefers reduced motion', () => {
-    const original = window.matchMedia
-    window.matchMedia = ((query: string) => ({
-      ...original(query),
-      matches: query === '(prefers-reduced-motion: reduce)',
-    })) as typeof window.matchMedia
-    try {
-      const { navigate, main } = setup()
-      expect(clickAndCheckPrevented(avariaLink(), { button: 0 })).toBe(false)
-      expect(main).not.toHaveAttribute('data-launching')
-      expect(navigate).not.toHaveBeenCalled()
-    } finally {
-      window.matchMedia = original
-    }
+    mockMedia((query) => query === '(prefers-reduced-motion: reduce)')
+    const { navigate, main } = setup()
+    expect(clickAndCheckPrevented(avariaLink(), { button: 0 })).toBe(false)
+    expect(main).not.toHaveAttribute('data-launching')
+    expect(navigate).not.toHaveBeenCalled()
   })
 
   it('shows an unavailable entry instead of a broken link when a URL is missing or unsafe', () => {

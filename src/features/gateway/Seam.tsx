@@ -26,6 +26,7 @@ export function Seam() {
         <span className="seam__ticks" />
         <span className="seam__packet" />
         <span className="seam__packet seam__packet--late" />
+        <span className="seam__surge" />
       </div>
 
       <div className="seam__node" aria-hidden="true">
