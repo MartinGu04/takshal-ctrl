@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
-import { E2E_AVARIA_URL, E2E_SUPABASE_URL } from './destinations.ts'
+import { E2E_AVARIA_URL, E2E_MACHLAVA_URL, E2E_SUPABASE_URL } from './destinations.ts'
 
 /**
  * Notification hub, end to end against the production build. External boundaries are mocked:
@@ -115,7 +115,8 @@ test.describe('PWA', () => {
 test.describe('service worker push handling', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'uses the Chromium DevTools protocol')
 
-  test('receives a push and shows a branded notification with a same-origin hand-off', async ({ page, context, baseURL }) => {
+  /** Delivers `payload` to the real service worker (DevTools protocol) and returns the notification it shows. */
+  async function deliverPush(page: Page, context: BrowserContext, baseURL: string, payload: Record<string, unknown>) {
     await context.grantPermissions(['notifications'], { origin: baseURL })
     await page.goto('/')
     await page.evaluate(() => navigator.serviceWorker.ready)
@@ -123,23 +124,27 @@ test.describe('service worker push handling', () => {
     const cdp = await context.newCDPSession(page)
     const registrationId = await new Promise<string>((resolve) => {
       cdp.on('ServiceWorker.workerRegistrationUpdated', ({ registrations }) => {
-        const match = registrations.find((registration: { scopeURL: string; isDeleted: boolean }) => registration.scopeURL.startsWith(baseURL!) && !registration.isDeleted)
+        const match = registrations.find((registration: { scopeURL: string; isDeleted: boolean }) => registration.scopeURL.startsWith(baseURL) && !registration.isDeleted)
         if (match) resolve(match.registrationId)
       })
       void cdp.send('ServiceWorker.enable')
     })
 
-    const payload = { v: 1, source: 'avaria', title: 'תקלה חדשה', body: 'מדפסת בקומה 2', target: '/incident/123', tag: 'incident-123', icon: 'https://evil.example/x.png' }
-    await cdp.send('ServiceWorker.deliverPushMessage', { origin: new URL(baseURL!).origin, registrationId, data: JSON.stringify(payload) })
+    await cdp.send('ServiceWorker.deliverPushMessage', { origin: new URL(baseURL).origin, registrationId, data: JSON.stringify(payload) })
 
     // Worker start-up plus notification display can take a moment on a loaded CI machine.
     await expect
       .poll(() => page.evaluate(async () => (await (await navigator.serviceWorker.ready).getNotifications()).length), { timeout: 15_000 })
       .toBe(1)
-    const shown = await page.evaluate(async () => {
+    return page.evaluate(async () => {
       const [notification] = await (await navigator.serviceWorker.ready).getNotifications()
       return { title: notification!.title, body: notification!.body, icon: notification!.icon, tag: notification!.tag, data: notification!.data }
     })
+  }
+
+  test('receives a push and shows a branded notification with a same-origin hand-off', async ({ page, context, baseURL }) => {
+    const payload = { v: 1, source: 'avaria', title: 'תקלה חדשה', body: 'מדפסת בקומה 2', target: '/incident/123', tag: 'incident-123', icon: 'https://evil.example/x.png' }
+    const shown = await deliverPush(page, context, baseURL!, payload)
     expect(shown).toEqual({
       title: 'Avaria · תקלה חדשה',
       body: 'מדפסת בקומה 2',
@@ -147,6 +152,24 @@ test.describe('service worker push handling', () => {
       tag: 'incident-123',
       data: { url: '/open?app=avaria&target=%2Fincident%2F123', source: 'avaria' },
     })
+  })
+
+  test('a המחלבה source push is branded as המחלבה and hands off to its destination', async ({ page, context, baseURL }) => {
+    await page.route(`${E2E_MACHLAVA_URL}**`, (route) => route.fulfill({ contentType: 'text/html', body: '<title>המחלבה stub</title>' }))
+    // Exactly the payload the source ingress builds for a המחלבה notification.
+    const payload = { v: 1, source: 'machlava', title: 'שינוי במשמרת', body: 'המשמרת שלך עודכנה.', target: '/schedule', tag: 'machlava-0123456789abcdef', timestamp: 1_760_000_000_000 }
+    const shown = await deliverPush(page, context, baseURL!, payload)
+    expect(shown).toEqual({
+      title: 'המחלבה · שינוי במשמרת',
+      body: 'המשמרת שלך עודכנה.',
+      icon: new URL('/icons/notify-machlava-192.png', baseURL).href,
+      tag: 'machlava-0123456789abcdef',
+      data: { url: '/open?app=machlava&target=%2Fschedule', source: 'machlava' },
+    })
+
+    // The tap opens TAKSHAL CTRL's /open, which continues to the trusted המחלבה base + target.
+    await page.goto(shown.data.url)
+    await expect(page).toHaveURL(`${E2E_MACHLAVA_URL}schedule`)
   })
 })
 

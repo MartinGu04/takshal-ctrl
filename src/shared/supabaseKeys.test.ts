@@ -34,4 +34,15 @@ describe('Supabase key model', () => {
       }).sort(),
     ).toEqual(['VITE_LEGACY', 'VITE_OOPS'])
   })
+
+  it('refuses any VITE_ variable named as a secret, such as a source credential', () => {
+    expect(
+      findClientExposedSecrets({
+        VITE_MACHLAVA_SOURCE_SECRET: 'f'.repeat(64),
+        VITE_EMPTY_SECRET: '',
+        MACHLAVA_SOURCE_SECRET: 'f'.repeat(64),
+        VITE_MACHLAVA_URL: 'https://luzly.vercel.app/',
+      }),
+    ).toEqual(['VITE_MACHLAVA_SOURCE_SECRET'])
+  })
 })

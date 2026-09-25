@@ -147,5 +147,33 @@ export function supabaseStore(db: SupabaseClient): SubscriptionStore {
       if (error) throw new Error('database-error')
       return count ?? 0
     },
+
+    async rememberRecipient(userId, email) {
+      // One transaction: frees the address from any other user, then upserts this user's row.
+      check(await db.rpc('remember_notification_recipient', { p_user_id: userId, p_email: email }))
+    },
+
+    async findRecipientUserId(email) {
+      const row = check(await db.from('notification_recipients').select('user_id').eq('email', email).maybeSingle<{ user_id: string }>())
+      return row?.user_id ?? null
+    },
+
+    async claimSourceEvent({ source, eventId, userId, leaseSeconds }) {
+      // insert … on conflict do nothing (+ lease takeover) in SQL: atomic under concurrent requests.
+      const claimed = check(
+        await db.rpc('claim_source_notification_event', { p_source: source, p_event_id: eventId, p_user_id: userId, p_lease_seconds: leaseSeconds }),
+      )
+      return claimed === true
+    },
+
+    async completeSourceEvent({ source, eventId }, report) {
+      check(
+        await db
+          .from('notification_events')
+          .update({ status: 'completed', delivered: report.delivered, failed: report.failed, removed: report.removed })
+          .eq('source', source)
+          .eq('event_id', eventId),
+      )
+    },
   }
 }

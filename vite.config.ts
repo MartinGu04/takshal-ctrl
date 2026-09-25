@@ -30,15 +30,17 @@ function serviceWorkerInDev(): Plugin {
 }
 
 /**
- * Refuses to build or serve when a Supabase secret key (sb_secret_… or a legacy service_role
- * JWT) sits in a VITE_-prefixed variable: those are inlined into the public browser bundle.
+ * Refuses to build or serve when a secret sits in a VITE_-prefixed variable (a Supabase secret
+ * key — sb_secret_… or a legacy service_role JWT — or any variable named as a secret, such as a
+ * source credential): those are inlined into the public browser bundle.
  */
 function guardClientSecrets(mode: string): void {
   const leaked = findClientExposedSecrets(loadEnv(mode, process.cwd(), 'VITE_'))
   if (leaked.length) {
     throw new Error(
-      `Refusing to bundle a Supabase secret key into the browser: ${leaked.join(', ')}. ` +
-        'Use the publishable key (sb_publishable_…) in VITE_SUPABASE_PUBLISHABLE_KEY; the secret key belongs only in SUPABASE_SECRET_KEY (server).',
+      `Refusing to bundle a secret into the browser: ${leaked.join(', ')}. ` +
+        'Use the publishable key (sb_publishable_…) in VITE_SUPABASE_PUBLISHABLE_KEY; the Supabase secret key belongs only in SUPABASE_SECRET_KEY ' +
+        'and source credentials only in their server variables (e.g. MACHLAVA_SOURCE_SECRET), never VITE_-prefixed.',
     )
   }
 }

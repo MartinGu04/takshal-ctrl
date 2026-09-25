@@ -1,6 +1,7 @@
 /** Server-only configuration. Never import this from browser code. */
 
 import { isPublishableKey, isSecretKey } from '../src/shared/supabaseKeys.js'
+import { MIN_SOURCE_SECRET_LENGTH, SOURCE_SECRET_ENV, type SourceId, type SourceSecrets } from './source.js'
 
 export interface HubEnv {
   readonly supabaseUrl: string
@@ -41,4 +42,24 @@ export function readHubEnv(env: EnvSource): { ok: true; value: HubEnv } | { ok: 
     )
   }
   return missing.length ? { ok: false, missing } : { ok: true, value }
+}
+
+/**
+ * Per-source credentials for the trusted source ingress (`/api/source/<source>/notify`). A source
+ * whose secret is missing or shorter than MIN_SOURCE_SECRET_LENGTH is left out, so its endpoint
+ * rejects every request. `problems` names the variables only — never a value.
+ */
+export function readSourceSecrets(env: EnvSource): { secrets: SourceSecrets; problems: string[] } {
+  const secrets: SourceSecrets = {}
+  const problems: string[] = []
+  for (const [source, name] of Object.entries(SOURCE_SECRET_ENV) as [SourceId, string][]) {
+    const value = env[name]?.trim()
+    if (!value) continue
+    if (value.length < MIN_SOURCE_SECRET_LENGTH) {
+      problems.push(`${name} (shorter than ${MIN_SOURCE_SECRET_LENGTH} characters; ignored)`)
+      continue
+    }
+    secrets[source] = value
+  }
+  return { secrets, problems }
 }

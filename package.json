@@ -1,7 +1,7 @@
 {
   "name": "takshal-ctrl",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "TAKSHAL CTRL — a cinematic split-screen gateway to Avaria and המחלבה.",
   "type": "module",
   "scripts": {

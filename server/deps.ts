@@ -2,7 +2,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAuthenticator } from './auth.js'
-import { readHubEnv, type EnvSource } from './env.js'
+import { readHubEnv, readSourceSecrets, type EnvSource } from './env.js'
 import type { HubDeps } from './handlers.js'
 import { webPushSender } from './sender.js'
 import { supabaseStore } from './store.supabase.js'
@@ -18,6 +18,8 @@ export function hubDeps(env: EnvSource = process.env): HubDeps | null {
     return cached
   }
   const { supabaseUrl, supabaseSecretKey, vapidPublicKey, vapidPrivateKey, vapidSubject } = config.value
+  const sources = readSourceSecrets(env)
+  if (sources.problems.length) console.warn(`[hub] source credentials not usable: ${sources.problems.join(', ')}`)
   const db = createClient(supabaseUrl, supabaseSecretKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   })
@@ -25,6 +27,7 @@ export function hubDeps(env: EnvSource = process.env): HubDeps | null {
     authenticator: supabaseAuthenticator(db),
     store: supabaseStore(db),
     sender: webPushSender({ publicKey: vapidPublicKey, privateKey: vapidPrivateKey, subject: vapidSubject }),
+    sourceSecrets: sources.secrets,
     log: (message) => console.info(message),
   }
   return cached
